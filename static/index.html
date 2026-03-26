@@ -379,7 +379,7 @@
 <body>
     <!-- ── Header ── -->
     <header class="hogar-header">
-        <button class="hogar-header__hamburguesa" onclick="document.getElementById('drawer').classList.toggle('hogar-drawer--abierto')" aria-label="Menu">
+        <button class="hogar-header__hamburguesa" id="btnMenu" aria-label="Menu">
             <span class="material-symbols-outlined">menu</span>
         </button>
         <div>
@@ -393,7 +393,12 @@
     </header>
 
     <!-- ── Drawer de navegacion ── -->
-    <nav id="drawer" class="hogar-drawer">
+    <div class="hogar-drawer-overlay oculto" id="drawerOverlay"></div>
+    <nav class="hogar-drawer oculto" id="drawerNav">
+        <button class="hogar-drawer__cerrar" id="btnCerrarDrawer">
+            <span class="material-symbols-outlined">close</span>
+        </button>
+        <span class="hogar-drawer__titulo">Navegacion</span>
         <a href="/" class="hogar-drawer__enlace">
             <span class="material-symbols-outlined">home</span><span>Inicio</span>
         </a>
@@ -536,6 +541,19 @@
     // Autodetectar prefijo (funciona con y sin proxy Nginx)
     var prefijo = location.pathname.replace(/\/+$/, '');
     var API = prefijo + "/api";
+
+    // ── Drawer de navegacion ──
+    var drawer = document.getElementById("drawerNav");
+    var overlay = document.getElementById("drawerOverlay");
+
+    function toggleDrawer() {
+        drawer.classList.toggle("oculto");
+        overlay.classList.toggle("oculto");
+    }
+
+    document.getElementById("btnMenu").addEventListener("click", toggleDrawer);
+    document.getElementById("btnCerrarDrawer").addEventListener("click", toggleDrawer);
+    overlay.addEventListener("click", toggleDrawer);
 
     // ── Tema claro/oscuro ──
     function toggleTema() {
