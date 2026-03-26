@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediDo — Metricas del Hogar</title>
+    <link rel="stylesheet" href="/static/hogar.css">
+    <style>
+        /* Estilos especificos de MediDo (no del design system) */
+
+        /* Semaforo global */
+        .medido-semaforo {
+            display: flex;
+            align-items: center;
+            gap: var(--gap-md);
+            margin-bottom: var(--gap-xl);
+            padding: var(--gap-lg);
+            background: var(--surface-container-lowest);
+            border-radius: var(--radio-xl);
+            box-shadow: var(--sombra-sm);
+        }
+
+        .medido-semaforo__icono {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .medido-semaforo__icono--ok { background: var(--exito); color: #fff; }
+        .medido-semaforo__icono--warning { background: var(--aviso); color: #fff; }
+        .medido-semaforo__icono--danger { background: var(--peligro); color: #fff; }
+
+        .medido-semaforo__texto {
+            font-family: var(--fuente-titular);
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--on-surface);
+        }
+
+        .medido-semaforo__detalle {
+            font-size: 0.8rem;
+            color: var(--on-surface-variant);
+            margin-top: 0.15rem;
+        }
+
+        /* Grid de tarjetas de metricas */
+        .medido-metricas {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: var(--gap-md);
+            margin-bottom: var(--gap-xl);
+        }
+
+        .medido-tarjeta {
+            background: var(--surface-container-lowest);
+            border-radius: var(--radio-xl);
+            padding: var(--gap-lg);
+            box-shadow: var(--sombra-sm);
+            transition: box-shadow var(--transicion);
+        }
+
+        .medido-tarjeta:hover { box-shadow: var(--sombra-md); }
+
+        .medido-tarjeta__label {
+            font-family: var(--fuente-titular);
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--on-surface-variant);
+            font-weight: 700;
+            margin-bottom: var(--gap-sm);
+        }
+
+        .medido-tarjeta__valor {
+            font-family: var(--fuente-titular);
+            font-size: 1.6rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin-bottom: var(--gap-sm);
+        }
+
+        .medido-tarjeta__valor--ok { color: var(--exito); }
+        .medido-tarjeta__valor--warning { color: var(--aviso); }
+        .medido-tarjeta__valor--danger { color: var(--peligro); }
+
+        /* Barra de progreso */
+        .medido-barra {
+            height: 8px;
+            border-radius: 4px;
+            background: var(--surface-container);
+            overflow: hidden;
+        }
+
+        .medido-barra__relleno {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease, background 0.3s ease;
+        }
+
+        .medido-barra__relleno--ok { background: var(--exito); }
+        .medido-barra__relleno--warning { background: var(--aviso); }
+        .medido-barra__relleno--danger { background: var(--peligro); }
+
+        .medido-tarjeta__sub {
+            font-size: 0.7rem;
+            color: var(--on-surface-variant);
+            margin-top: var(--gap-xs);
+        }
+
+        /* Seccion con titulo */
+        .medido-seccion {
+            margin-bottom: var(--gap-xl);
+        }
+
+        .medido-seccion__titulo {
+            font-family: var(--fuente-titular);
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--on-surface);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: var(--gap-md);
+            display: flex;
+            align-items: center;
+            gap: var(--gap-sm);
+        }
+
+        .medido-seccion__titulo .material-symbols-outlined {
+            font-size: 1.1rem;
+            color: var(--primary);
+        }
+
+        /* Grid de contenedores y servicios */
+        .medido-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: var(--gap-sm);
+        }
+
+        .medido-item {
+            display: flex;
+            align-items: center;
+            gap: var(--gap-md);
+            padding: 0.75rem var(--gap-md);
+            background: var(--surface-container-lowest);
+            border-radius: var(--radio-lg);
+            box-shadow: var(--sombra-sm);
+            transition: box-shadow var(--transicion);
+        }
+
+        .medido-item:hover { box-shadow: var(--sombra-md); }
+
+        .medido-item__estado {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .medido-item__estado--running { background: var(--exito); }
+        .medido-item__estado--ok { background: var(--exito); }
+        .medido-item__estado--stopped { background: var(--peligro); }
+        .medido-item__estado--exited { background: var(--peligro); }
+        .medido-item__estado--caido { background: var(--peligro); }
+        .medido-item__estado--error { background: var(--peligro); }
+        .medido-item__estado--lento { background: var(--aviso); }
+        .medido-item__estado--paused { background: var(--aviso); }
+
+        .medido-item__nombre {
+            font-family: var(--fuente-titular);
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--on-surface);
+            flex: 1;
+        }
+
+        .medido-item__detalle {
+            font-size: 0.65rem;
+            color: var(--on-surface-variant);
+            text-align: right;
+        }
+
+        /* VMs grid */
+        .medido-vms {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: var(--gap-md);
+            margin-bottom: var(--gap-md);
+        }
+
+        .medido-vm {
+            background: var(--surface-container-lowest);
+            border-radius: var(--radio-xl);
+            padding: var(--gap-lg);
+            box-shadow: var(--sombra-sm);
+        }
+
+        .medido-vm__nombre {
+            font-family: var(--fuente-titular);
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--on-surface);
+            margin-bottom: var(--gap-sm);
+            display: flex;
+            align-items: center;
+            gap: var(--gap-sm);
+        }
+
+        .medido-vm__fila {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.72rem;
+            color: var(--on-surface-variant);
+            margin-bottom: 0.35rem;
+        }
+
+        .medido-vm__fila-valor {
+            font-weight: 700;
+            font-family: var(--fuente-titular);
+        }
+
+        /* Grafica historial */
+        .medido-grafica-contenedor {
+            background: var(--surface-container-lowest);
+            border-radius: var(--radio-xl);
+            padding: var(--gap-lg);
+            box-shadow: var(--sombra-sm);
+        }
+
+        .medido-grafica-contenedor canvas {
+            width: 100%;
+            height: 200px;
+        }
+
+        .medido-leyenda {
+            display: flex;
+            gap: var(--gap-lg);
+            justify-content: center;
+            margin-top: var(--gap-sm);
+            flex-wrap: wrap;
+        }
+
+        .medido-leyenda__item {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            font-size: 0.65rem;
+            font-family: var(--fuente-titular);
+            font-weight: 600;
+            color: var(--on-surface-variant);
+        }
+
+        .medido-leyenda__color {
+            width: 12px;
+            height: 3px;
+            border-radius: 2px;
+        }
+
+        /* Alertas */
+        .medido-alertas-lista {
+            display: flex;
+            flex-direction: column;
+            gap: var(--gap-sm);
+        }
+
+        .medido-alerta {
+            display: flex;
+            align-items: center;
+            gap: var(--gap-md);
+            padding: 0.75rem var(--gap-md);
+            background: var(--surface-container-lowest);
+            border-radius: var(--radio-lg);
+            border-left: 3px solid var(--aviso);
+        }
+
+        .medido-alerta--resuelta {
+            opacity: 0.5;
+            border-left-color: var(--surface-container);
+        }
+
+        .medido-alerta__texto {
+            flex: 1;
+            font-size: 0.8rem;
+            color: var(--on-surface);
+        }
+
+        .medido-alerta__fecha {
+            font-size: 0.65rem;
+            color: var(--on-surface-variant);
+        }
+
+        .medido-alerta__btn {
+            padding: 0.3rem 0.7rem;
+            border: none;
+            border-radius: var(--radio-full);
+            background: var(--primary);
+            color: var(--on-primary);
+            font-size: 0.65rem;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: var(--fuente-titular);
+        }
+
+        .medido-sin-datos {
+            text-align: center;
+            padding: 1.5rem;
+            color: var(--on-surface-variant);
+            font-style: italic;
+            font-size: 0.85rem;
+        }
+
+        /* Tabs de navegacion interna */
+        .medido-tabs {
+            display: flex;
+            gap: var(--gap-xs);
+            margin-bottom: var(--gap-xl);
+            flex-wrap: wrap;
+        }
+
+        .medido-tab {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: var(--radio-full);
+            background: var(--surface-container);
+            font-family: var(--fuente-titular);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            color: var(--on-surface-variant);
+            transition: background var(--transicion), color var(--transicion);
+        }
+
+        .medido-tab:hover { background: var(--surface-container-high); }
+
+        .medido-tab--activo {
+            background: var(--primary);
+            color: var(--on-primary);
+        }
+
+        .medido-panel { display: none; }
+        .medido-panel--activo { display: block; }
+
+        /* Almacenamiento */
+        .medido-storage {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: var(--gap-md);
+        }
+
+        .medido-storage-item {
+            background: var(--surface-container-lowest);
+            border-radius: var(--radio-xl);
+            padding: var(--gap-lg);
+            box-shadow: var(--sombra-sm);
+        }
+
+        .medido-storage-item__nombre {
+            font-family: var(--fuente-titular);
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--on-surface);
+            margin-bottom: var(--gap-sm);
+        }
+
+        .medido-storage-item__info {
+            font-size: 0.7rem;
+            color: var(--on-surface-variant);
+            margin-top: var(--gap-xs);
+        }
+    </style>
+</head>
+<body>
+    <!-- ── Header ── -->
+    <header class="hogar-header">
+        <button class="hogar-header__hamburguesa" onclick="document.getElementById('drawer').classList.toggle('hogar-drawer--abierto')" aria-label="Menu">
+            <span class="material-symbols-outlined">menu</span>
+        </button>
+        <div>
+            <div class="hogar-header__titulo">MediDo</div>
+            <div class="hogar-header__subtitulo">Metricas del hogar</div>
+        </div>
+        <div style="flex:1"></div>
+        <button class="hogar-toggle-tema" onclick="toggleTema()" aria-label="Cambiar tema">
+            <span class="material-symbols-outlined" id="iconoTema">dark_mode</span>
+        </button>
+    </header>
+
+    <!-- ── Drawer de navegacion ── -->
+    <nav id="drawer" class="hogar-drawer">
+        <a href="/" class="hogar-drawer__enlace">
+            <span class="material-symbols-outlined">home</span><span>Inicio</span>
+        </a>
+        <a href="/red/" class="hogar-drawer__enlace">
+            <span class="material-symbols-outlined">router</span><span>Red</span>
+        </a>
+        <a href="/finanzas/" class="hogar-drawer__enlace">
+            <span class="material-symbols-outlined">account_balance</span><span>Finanzas</span>
+        </a>
+        <a href="/salud/" class="hogar-drawer__enlace hogar-drawer__enlace--activo">
+            <span class="material-symbols-outlined">monitor_heart</span><span>Salud</span>
+        </a>
+    </nav>
+
+    <!-- ── Contenido principal ── -->
+    <main class="hogar-contenedor">
+
+        <!-- Semaforo global -->
+        <div class="medido-semaforo" id="semaforo">
+            <div class="medido-semaforo__icono medido-semaforo__icono--ok" id="semaforoIcono">
+                <span class="material-symbols-outlined" style="font-size:1.6rem">check_circle</span>
+            </div>
+            <div>
+                <div class="medido-semaforo__texto" id="semaforoTexto">Cargando...</div>
+                <div class="medido-semaforo__detalle" id="semaforoDetalle"></div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="medido-tabs">
+            <button class="medido-tab medido-tab--activo" data-tab="general" onclick="cambiarTab('general')">General</button>
+            <button class="medido-tab" data-tab="proxmox" onclick="cambiarTab('proxmox')">Proxmox</button>
+            <button class="medido-tab" data-tab="contenedores" onclick="cambiarTab('contenedores')">Contenedores</button>
+            <button class="medido-tab" data-tab="servicios" onclick="cambiarTab('servicios')">Servicios</button>
+            <button class="medido-tab" data-tab="historial" onclick="cambiarTab('historial')">Historial</button>
+            <button class="medido-tab" data-tab="alertas" onclick="cambiarTab('alertas')">Alertas</button>
+        </div>
+
+        <!-- ═══ PANEL: General ═══ -->
+        <div class="medido-panel medido-panel--activo" id="panelGeneral">
+            <div class="medido-metricas" id="metricasGeneral">
+                <p class="medido-sin-datos">Cargando metricas...</p>
+            </div>
+        </div>
+
+        <!-- ═══ PANEL: Proxmox ═══ -->
+        <div class="medido-panel" id="panelProxmox">
+            <!-- Host -->
+            <div class="medido-seccion">
+                <div class="medido-seccion__titulo">
+                    <span class="material-symbols-outlined">dns</span> Host Proxmox
+                </div>
+                <div class="medido-metricas" id="metricasHost"></div>
+            </div>
+
+            <!-- VMs -->
+            <div class="medido-seccion">
+                <div class="medido-seccion__titulo">
+                    <span class="material-symbols-outlined">computer</span> Maquinas Virtuales
+                </div>
+                <div class="medido-vms" id="listaVMs"></div>
+            </div>
+
+            <!-- Almacenamiento -->
+            <div class="medido-seccion">
+                <div class="medido-seccion__titulo">
+                    <span class="material-symbols-outlined">storage</span> Almacenamiento
+                </div>
+                <div class="medido-storage" id="listaStorage"></div>
+            </div>
+        </div>
+
+        <!-- ═══ PANEL: Contenedores ═══ -->
+        <div class="medido-panel" id="panelContenedores">
+            <div class="medido-seccion">
+                <div class="medido-seccion__titulo">
+                    <span class="material-symbols-outlined">deployed_code</span>
+                    Contenedores Docker
+                    <span id="conteoContenedores" style="font-weight:400;font-size:0.7rem;color:var(--on-surface-variant)"></span>
+                </div>
+                <div class="medido-grid" id="listaContenedores"></div>
+            </div>
+        </div>
+
+        <!-- ═══ PANEL: Servicios ═══ -->
+        <div class="medido-panel" id="panelServicios">
+            <div class="medido-seccion">
+                <div class="medido-seccion__titulo">
+                    <span class="material-symbols-outlined">lan</span> Health Checks
+                </div>
+                <div class="medido-grid" id="listaServicios"></div>
+            </div>
+        </div>
+
+        <!-- ═══ PANEL: Historial ═══ -->
+        <div class="medido-panel" id="panelHistorial">
+            <div class="medido-seccion">
+                <div class="medido-seccion__titulo">
+                    <span class="material-symbols-outlined">timeline</span> Historial 24h
+                </div>
+                <div class="medido-grafica-contenedor">
+                    <canvas id="graficaHistorial"></canvas>
+                    <div class="medido-leyenda">
+                        <div class="medido-leyenda__item">
+                            <div class="medido-leyenda__color" style="background:#26a69a"></div> CPU Host
+                        </div>
+                        <div class="medido-leyenda__item">
+                            <div class="medido-leyenda__color" style="background:#ef5350"></div> RAM Host
+                        </div>
+                        <div class="medido-leyenda__item">
+                            <div class="medido-leyenda__color" style="background:#42a5f5"></div> CPU VM
+                        </div>
+                        <div class="medido-leyenda__item">
+                            <div class="medido-leyenda__color" style="background:#ffa726"></div> RAM VM
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ PANEL: Alertas ═══ -->
+        <div class="medido-panel" id="panelAlertas">
+            <div class="medido-seccion">
+                <div class="medido-seccion__titulo">
+                    <span class="material-symbols-outlined">notifications</span> Alertas
+                </div>
+                <div class="medido-alertas-lista" id="listaAlertas">
+                    <p class="medido-sin-datos">Sin alertas</p>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+    /* ══════════════════════════════════════════════
+       MediDo — Frontend
+       ══════════════════════════════════════════════ */
+
+    var API = "/api";
+
+    // ── Tema claro/oscuro ──
+    function toggleTema() {
+        var html = document.documentElement;
+        var actual = html.getAttribute("data-tema");
+        var nuevo = actual === "oscuro" ? "claro" : "oscuro";
+        html.setAttribute("data-tema", nuevo);
+        localStorage.setItem("hogar-tema", nuevo);
+        document.getElementById("iconoTema").textContent =
+            nuevo === "oscuro" ? "light_mode" : "dark_mode";
+    }
+
+    (function() {
+        var tema = localStorage.getItem("hogar-tema") || "claro";
+        document.documentElement.setAttribute("data-tema", tema);
+        var icono = document.getElementById("iconoTema");
+        if (icono) icono.textContent = tema === "oscuro" ? "light_mode" : "dark_mode";
+    })();
+
+    // ── Tabs ──
+    function cambiarTab(nombre) {
+        // Desactivar todos
+        var tabs = document.querySelectorAll('.medido-tab');
+        var paneles = document.querySelectorAll('.medido-panel');
+        for (var i = 0; i < tabs.length; i++) tabs[i].classList.remove('medido-tab--activo');
+        for (var i = 0; i < paneles.length; i++) paneles[i].classList.remove('medido-panel--activo');
+
+        // Activar seleccionado
+        var tab = document.querySelector('[data-tab="' + nombre + '"]');
+        if (tab) tab.classList.add('medido-tab--activo');
+        var panel = document.getElementById('panel' + nombre.charAt(0).toUpperCase() + nombre.slice(1));
+        if (panel) panel.classList.add('medido-panel--activo');
+
+        // Cargar datos del panel
+        if (nombre === 'proxmox') cargarProxmox();
+        if (nombre === 'contenedores') cargarContenedores();
+        if (nombre === 'servicios') cargarServicios();
+        if (nombre === 'historial') cargarHistorial();
+        if (nombre === 'alertas') cargarAlertas();
+    }
+
+    // ── Helpers ──
+    function colorMetrica(valor) {
+        if (valor > 85) return 'danger';
+        if (valor > 70) return 'warning';
+        return 'ok';
+    }
+
+    function crearTarjetaMetrica(label, valor, sub) {
+        var pct = valor || 0;
+        var color = colorMetrica(pct);
+        return '<div class="medido-tarjeta">' +
+            '<div class="medido-tarjeta__label">' + label + '</div>' +
+            '<div class="medido-tarjeta__valor medido-tarjeta__valor--' + color + '">' +
+                (valor !== null ? pct.toFixed(1) + '%' : '--') +
+            '</div>' +
+            '<div class="medido-barra"><div class="medido-barra__relleno medido-barra__relleno--' + color + '" style="width:' + pct + '%"></div></div>' +
+            (sub ? '<div class="medido-tarjeta__sub">' + sub + '</div>' : '') +
+        '</div>';
+    }
+
+    function formatearUptime(horas) {
+        if (!horas && horas !== 0) return '--';
+        if (horas < 24) return horas.toFixed(0) + 'h';
+        return (horas / 24).toFixed(0) + 'd';
+    }
+
+    // ── Cargar resumen general ──
+    function cargarGeneral() {
+        fetch(API + '/resumen')
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            // Semaforo
+            var icono = document.getElementById('semaforoIcono');
+            var texto = document.getElementById('semaforoTexto');
+            var detalle = document.getElementById('semaforoDetalle');
+
+            icono.className = 'medido-semaforo__icono medido-semaforo__icono--' + d.estado_global;
+            var iconos = { ok: 'check_circle', warning: 'warning', danger: 'error' };
+            var textos = { ok: 'Todo funciona correctamente', warning: 'Atencion: algo necesita revision', danger: 'Alerta critica' };
+            icono.innerHTML = '<span class="material-symbols-outlined" style="font-size:1.6rem">' + (iconos[d.estado_global] || 'help') + '</span>';
+            texto.textContent = textos[d.estado_global] || 'Desconocido';
+
+            var detalles = [];
+            if (d.contenedores_running !== null) detalles.push(d.contenedores_running + '/' + d.contenedores_total + ' contenedores');
+            if (d.servicios_total > 0) detalles.push(d.servicios_ok + '/' + d.servicios_total + ' servicios OK');
+            if (d.alertas_activas > 0) detalles.push(d.alertas_activas + ' alertas activas');
+            detalle.textContent = detalles.join(' · ');
+
+            // Tarjetas metricas
+            var html = '';
+            html += crearTarjetaMetrica('CPU Host', d.pve_cpu_percent);
+            html += crearTarjetaMetrica('RAM Host', d.pve_memoria_percent);
+            html += crearTarjetaMetrica('CPU VM 101', d.vm_cpu_percent);
+            html += crearTarjetaMetrica('RAM VM 101', d.vm_memoria_percent);
+            html += crearTarjetaMetrica('Disco VM 101', d.vm_disco_percent);
+
+            // Tarjeta de contenedores (texto)
+            html += '<div class="medido-tarjeta">' +
+                '<div class="medido-tarjeta__label">Contenedores</div>' +
+                '<div class="medido-tarjeta__valor medido-tarjeta__valor--ok">' +
+                    (d.contenedores_running || '--') + '/' + (d.contenedores_total || '--') +
+                '</div>' +
+                '<div class="medido-tarjeta__sub">running / total</div>' +
+            '</div>';
+
+            document.getElementById('metricasGeneral').innerHTML = html;
+        })
+        .catch(function() {
+            document.getElementById('metricasGeneral').innerHTML =
+                '<p class="medido-sin-datos">Error cargando metricas</p>';
+        });
+    }
+
+    // ── Cargar Proxmox detallado ──
+    function cargarProxmox() {
+        fetch(API + '/proxmox')
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            // Host
+            var hostHtml = '';
+            if (d.host) {
+                hostHtml += crearTarjetaMetrica('CPU', d.host.cpu_percent);
+                hostHtml += crearTarjetaMetrica('RAM', d.host.memoria.percent,
+                    d.host.memoria.usado_gb + ' / ' + d.host.memoria.total_gb + ' GB');
+                hostHtml += '<div class="medido-tarjeta">' +
+                    '<div class="medido-tarjeta__label">Uptime</div>' +
+                    '<div class="medido-tarjeta__valor" style="color:var(--primary)">' +
+                        d.host.uptime_dias.toFixed(0) + ' dias</div>' +
+                '</div>';
+            }
+            document.getElementById('metricasHost').innerHTML = hostHtml || '<p class="medido-sin-datos">Sin datos</p>';
+
+            // VMs
+            var vmsHtml = '';
+            for (var i = 0; i < d.vms.length; i++) {
+                var vm = d.vms[i];
+                var running = vm.estado === 'running';
+                vmsHtml += '<div class="medido-vm">' +
+                    '<div class="medido-vm__nombre">' +
+                        '<span class="medido-item__estado medido-item__estado--' + (running ? 'running' : 'stopped') + '"></span>' +
+                        vm.nombre + ' (VM ' + vm.vmid + ')' +
+                    '</div>';
+                if (running) {
+                    vmsHtml += '<div class="medido-vm__fila"><span>CPU (' + vm.cpus + ' cores)</span><span class="medido-vm__fila-valor">' + vm.cpu_percent.toFixed(1) + '%</span></div>' +
+                        '<div class="medido-barra" style="margin-bottom:0.4rem"><div class="medido-barra__relleno medido-barra__relleno--' + colorMetrica(vm.cpu_percent) + '" style="width:' + vm.cpu_percent + '%"></div></div>' +
+                        '<div class="medido-vm__fila"><span>RAM</span><span class="medido-vm__fila-valor">' + vm.memoria.usado_gb + ' / ' + vm.memoria.total_gb + ' GB (' + vm.memoria.percent.toFixed(1) + '%)</span></div>' +
+                        '<div class="medido-barra" style="margin-bottom:0.4rem"><div class="medido-barra__relleno medido-barra__relleno--' + colorMetrica(vm.memoria.percent) + '" style="width:' + vm.memoria.percent + '%"></div></div>' +
+                        '<div class="medido-vm__fila"><span>Disco</span><span class="medido-vm__fila-valor">' + vm.disco.total_gb + ' GB</span></div>' +
+                        '<div class="medido-vm__fila"><span>Uptime</span><span class="medido-vm__fila-valor">' + vm.uptime_dias.toFixed(0) + ' dias</span></div>';
+                } else {
+                    vmsHtml += '<div class="medido-vm__fila"><span>Estado</span><span class="medido-vm__fila-valor" style="color:var(--peligro)">Parada</span></div>' +
+                        '<div class="medido-vm__fila"><span>Disco</span><span class="medido-vm__fila-valor">' + vm.disco.total_gb + ' GB</span></div>';
+                }
+                vmsHtml += '</div>';
+            }
+            document.getElementById('listaVMs').innerHTML = vmsHtml || '<p class="medido-sin-datos">Sin VMs</p>';
+
+            // Almacenamiento
+            var storHtml = '';
+            for (var i = 0; i < d.almacenamiento.length; i++) {
+                var s = d.almacenamiento[i];
+                var color = colorMetrica(s.percent);
+                storHtml += '<div class="medido-storage-item">' +
+                    '<div class="medido-storage-item__nombre">' + s.nombre + '</div>' +
+                    '<div class="medido-tarjeta__valor medido-tarjeta__valor--' + color + '" style="font-size:1.2rem">' + s.percent.toFixed(1) + '%</div>' +
+                    '<div class="medido-barra"><div class="medido-barra__relleno medido-barra__relleno--' + color + '" style="width:' + s.percent + '%"></div></div>' +
+                    '<div class="medido-storage-item__info">' + s.usado_gb + ' / ' + s.total_gb + ' GB — ' + s.tipo + '</div>' +
+                '</div>';
+            }
+            document.getElementById('listaStorage').innerHTML = storHtml || '<p class="medido-sin-datos">Sin almacenamiento</p>';
+        })
+        .catch(function() {
+            document.getElementById('metricasHost').innerHTML = '<p class="medido-sin-datos">Error</p>';
+        });
+    }
+
+    // ── Cargar contenedores ──
+    function cargarContenedores() {
+        fetch(API + '/contenedores')
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            document.getElementById('conteoContenedores').textContent =
+                '(' + d.running + '/' + d.total + ' running)';
+
+            var html = '';
+            for (var i = 0; i < d.contenedores.length; i++) {
+                var c = d.contenedores[i];
+                var det = c.estado;
+                if (c.uptime_horas !== null) det = formatearUptime(c.uptime_horas) + ' uptime';
+                html += '<div class="medido-item">' +
+                    '<div class="medido-item__estado medido-item__estado--' + c.estado + '"></div>' +
+                    '<div class="medido-item__nombre">' + c.nombre + '</div>' +
+                    '<div class="medido-item__detalle">' + det + '</div>' +
+                '</div>';
+            }
+            document.getElementById('listaContenedores').innerHTML = html || '<p class="medido-sin-datos">Sin contenedores</p>';
+        })
+        .catch(function() {
+            document.getElementById('listaContenedores').innerHTML = '<p class="medido-sin-datos">Error</p>';
+        });
+    }
+
+    // ── Cargar servicios ──
+    function cargarServicios() {
+        fetch(API + '/servicios')
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            var html = '';
+            for (var i = 0; i < d.servicios.length; i++) {
+                var s = d.servicios[i];
+                var det = s.tiempo_respuesta_ms !== null ? s.tiempo_respuesta_ms + 'ms' : '--';
+                html += '<div class="medido-item">' +
+                    '<div class="medido-item__estado medido-item__estado--' + s.estado + '"></div>' +
+                    '<div class="medido-item__nombre">' + s.servicio + '</div>' +
+                    '<div class="medido-item__detalle">' + det + '</div>' +
+                '</div>';
+            }
+            document.getElementById('listaServicios').innerHTML = html || '<p class="medido-sin-datos">Sin datos</p>';
+        })
+        .catch(function() {
+            document.getElementById('listaServicios').innerHTML = '<p class="medido-sin-datos">Error</p>';
+        });
+    }
+
+    // ── Cargar historial (grafica canvas) ──
+    function cargarHistorial() {
+        fetch(API + '/proxmox/historial?horas=24')
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            dibujarGrafica(d.puntos);
+        })
+        .catch(function() {});
+    }
+
+    function dibujarGrafica(puntos) {
+        var canvas = document.getElementById('graficaHistorial');
+        if (!canvas || !puntos || puntos.length === 0) return;
+
+        var ctx = canvas.getContext('2d');
+        var rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width - 40;
+        canvas.height = 200;
+
+        var w = canvas.width;
+        var h = canvas.height;
+        var margen = { top: 10, right: 10, bottom: 25, left: 35 };
+        var areaW = w - margen.left - margen.right;
+        var areaH = h - margen.top - margen.bottom;
+
+        ctx.clearRect(0, 0, w, h);
+
+        // Lineas de referencia
+        ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--surface-container') || '#e0e0e0';
+        ctx.lineWidth = 1;
+        for (var p = 0; p <= 100; p += 25) {
+            var y = margen.top + areaH - (p / 100 * areaH);
+            ctx.beginPath();
+            ctx.moveTo(margen.left, y);
+            ctx.lineTo(margen.left + areaW, y);
+            ctx.stroke();
+            // Labels
+            ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--on-surface-variant') || '#888';
+            ctx.font = '10px sans-serif';
+            ctx.textAlign = 'right';
+            ctx.fillText(p + '%', margen.left - 5, y + 3);
+        }
+
+        // Series
+        var series = [
+            { campo: 'pve_cpu_percent', color: '#26a69a' },
+            { campo: 'pve_memoria_percent', color: '#ef5350' },
+            { campo: 'vm_cpu_percent', color: '#42a5f5' },
+            { campo: 'vm_memoria_percent', color: '#ffa726' },
+        ];
+
+        for (var s = 0; s < series.length; s++) {
+            ctx.beginPath();
+            ctx.strokeStyle = series[s].color;
+            ctx.lineWidth = 2;
+
+            var primera = true;
+            for (var i = 0; i < puntos.length; i++) {
+                var val = puntos[i][series[s].campo];
+                if (val === null || val === undefined) continue;
+                var x = margen.left + (i / (puntos.length - 1)) * areaW;
+                var y = margen.top + areaH - (val / 100 * areaH);
+                if (primera) { ctx.moveTo(x, y); primera = false; }
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+        }
+
+        // Etiquetas de tiempo
+        if (puntos.length > 1) {
+            ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--on-surface-variant') || '#888';
+            ctx.font = '10px sans-serif';
+            ctx.textAlign = 'center';
+            var step = Math.max(1, Math.floor(puntos.length / 6));
+            for (var i = 0; i < puntos.length; i += step) {
+                var fecha = puntos[i].fecha || '';
+                var hora = fecha.split(' ')[1] || '';
+                if (hora) hora = hora.substring(0, 5);
+                var x = margen.left + (i / (puntos.length - 1)) * areaW;
+                ctx.fillText(hora, x, h - 5);
+            }
+        }
+    }
+
+    // ── Cargar alertas ──
+    function cargarAlertas() {
+        fetch(API + '/alertas')
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            if (!d.alertas || d.alertas.length === 0) {
+                document.getElementById('listaAlertas').innerHTML =
+                    '<p class="medido-sin-datos">Sin alertas</p>';
+                return;
+            }
+
+            var html = '';
+            for (var i = 0; i < d.alertas.length; i++) {
+                var a = d.alertas[i];
+                var clase = a.resuelta ? ' medido-alerta--resuelta' : '';
+                html += '<div class="medido-alerta' + clase + '">' +
+                    '<div class="medido-alerta__texto">' + a.mensaje + '</div>' +
+                    '<div class="medido-alerta__fecha">' + (a.fecha || '').replace('T', ' ') + '</div>';
+                if (!a.resuelta) {
+                    html += '<button class="medido-alerta__btn" onclick="resolverAlerta(' + a.id + ')">Resolver</button>';
+                }
+                html += '</div>';
+            }
+            document.getElementById('listaAlertas').innerHTML = html;
+        })
+        .catch(function() {
+            document.getElementById('listaAlertas').innerHTML =
+                '<p class="medido-sin-datos">Error cargando alertas</p>';
+        });
+    }
+
+    function resolverAlerta(id) {
+        fetch(API + '/alertas/' + id + '/resolver', { method: 'POST' })
+        .then(function() { cargarAlertas(); })
+        .catch(function() {});
+    }
+
+    // ── Inicializacion ──
+    cargarGeneral();
+
+    // Refresco automatico cada 60 segundos
+    setInterval(function() {
+        cargarGeneral();
+        // Refrescar el panel activo
+        var activo = document.querySelector('.medido-tab--activo');
+        if (activo) {
+            var tab = activo.getAttribute('data-tab');
+            if (tab === 'proxmox') cargarProxmox();
+            if (tab === 'contenedores') cargarContenedores();
+            if (tab === 'servicios') cargarServicios();
+            if (tab === 'historial') cargarHistorial();
+            if (tab === 'alertas') cargarAlertas();
+        }
+    }, 60000);
+    </script>
+</body>
+</html>
