@@ -399,18 +399,28 @@
             <span class="material-symbols-outlined">close</span>
         </button>
         <span class="hogar-drawer__titulo">Navegacion</span>
-        <a href="/" class="hogar-drawer__enlace">
-            <span class="material-symbols-outlined">home</span><span>Inicio</span>
-        </a>
-        <a href="/red/" class="hogar-drawer__enlace">
-            <span class="material-symbols-outlined">router</span><span>Red</span>
-        </a>
-        <a href="/finanzas/" class="hogar-drawer__enlace">
-            <span class="material-symbols-outlined">account_balance</span><span>Finanzas</span>
-        </a>
         <a href="/salud/" class="hogar-drawer__enlace hogar-drawer__enlace--activo">
-            <span class="material-symbols-outlined">monitor_heart</span><span>Salud</span>
+            <span class="material-symbols-outlined">monitor_heart</span>
+            <span>Salud</span>
         </a>
+        <div class="hogar-drawer__separador"></div>
+        <button class="hogar-drawer__enlace" onclick="window.location=window.location.origin">
+            <span class="material-symbols-outlined">roofing</span>
+            <span>Ir al Portal</span>
+        </button>
+        <button class="hogar-drawer__enlace" onclick="window.location=window.location.origin+'/red/'">
+            <span class="material-symbols-outlined">lan</span>
+            <span>Red</span>
+        </button>
+        <button class="hogar-drawer__enlace" onclick="window.location=window.location.origin+'/finanzas/'">
+            <span class="material-symbols-outlined">payments</span>
+            <span>Finanzas</span>
+        </button>
+        <div class="hogar-drawer__separador"></div>
+        <button class="hogar-drawer__enlace" id="btnTema">
+            <span class="material-symbols-outlined" id="iconoTemaDrawer">dark_mode</span>
+            <span>Cambiar tema</span>
+        </button>
     </nav>
 
     <!-- ── Contenido principal ── -->
@@ -556,22 +566,30 @@
     overlay.addEventListener("click", toggleDrawer);
 
     // ── Tema claro/oscuro ──
+    function actualizarIconosTema(tema) {
+        var icono = tema === "oscuro" ? "light_mode" : "dark_mode";
+        var el1 = document.getElementById("iconoTema");
+        var el2 = document.getElementById("iconoTemaDrawer");
+        if (el1) el1.textContent = icono;
+        if (el2) el2.textContent = icono;
+    }
+
     function toggleTema() {
         var html = document.documentElement;
         var actual = html.getAttribute("data-tema");
         var nuevo = actual === "oscuro" ? "claro" : "oscuro";
         html.setAttribute("data-tema", nuevo);
         localStorage.setItem("hogar-tema", nuevo);
-        document.getElementById("iconoTema").textContent =
-            nuevo === "oscuro" ? "light_mode" : "dark_mode";
+        actualizarIconosTema(nuevo);
     }
 
     (function() {
         var tema = localStorage.getItem("hogar-tema") || "claro";
         document.documentElement.setAttribute("data-tema", tema);
-        var icono = document.getElementById("iconoTema");
-        if (icono) icono.textContent = tema === "oscuro" ? "light_mode" : "dark_mode";
+        actualizarIconosTema(tema);
     })();
+
+    document.getElementById("btnTema").addEventListener("click", toggleTema);
 
     // ── Tabs ──
     function cambiarTab(nombre) {
