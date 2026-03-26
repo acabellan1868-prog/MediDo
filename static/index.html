@@ -533,7 +533,9 @@
        MediDo — Frontend
        ══════════════════════════════════════════════ */
 
-    var API = "/api";
+    // Autodetectar prefijo (funciona con y sin proxy Nginx)
+    var prefijo = location.pathname.replace(/\/+$/, '');
+    var API = prefijo + "/api";
 
     // ── Tema claro/oscuro ──
     function toggleTema() {
