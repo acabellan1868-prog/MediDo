@@ -377,19 +377,23 @@
     </style>
 </head>
 <body>
-    <!-- ── Header ── -->
+    <!-- ── Lumina (gradiente decorativo) ── -->
+    <div class="hogar-lumina"></div>
+
+    <!-- ── Header flotante ── -->
     <header class="hogar-header">
-        <button class="hogar-header__hamburguesa" id="btnMenu" aria-label="Menu">
-            <span class="material-symbols-outlined">menu</span>
-        </button>
-        <div>
-            <div class="hogar-header__titulo">MediDo</div>
-            <div class="hogar-header__subtitulo">Metricas del hogar</div>
+        <div class="hogar-header__barra">
+            <a href="/salud/" class="hogar-header__marca">
+                <span class="material-symbols-outlined filled hogar-header__icono-marca">monitor_heart</span>
+                <div>
+                    <div class="hogar-header__titulo">MediDo</div>
+                    <div class="hogar-header__subtitulo">Metricas del hogar</div>
+                </div>
+            </a>
+            <button class="hogar-header__menu-btn" id="btnMenu">
+                <span class="material-symbols-outlined">menu</span>
+            </button>
         </div>
-        <div style="flex:1"></div>
-        <button class="hogar-toggle-tema" onclick="toggleTema()" aria-label="Cambiar tema">
-            <span class="material-symbols-outlined" id="iconoTema">dark_mode</span>
-        </button>
     </header>
 
     <!-- ── Drawer de navegacion ── -->
@@ -568,10 +572,8 @@
     // ── Tema claro/oscuro ──
     function actualizarIconosTema(tema) {
         var icono = tema === "oscuro" ? "light_mode" : "dark_mode";
-        var el1 = document.getElementById("iconoTema");
-        var el2 = document.getElementById("iconoTemaDrawer");
-        if (el1) el1.textContent = icono;
-        if (el2) el2.textContent = icono;
+        var el = document.getElementById("iconoTemaDrawer");
+        if (el) el.textContent = icono;
     }
 
     function toggleTema() {
