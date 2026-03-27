@@ -786,6 +786,7 @@
             for (var i = 0; i < d.servicios.length; i++) {
                 var s = d.servicios[i];
                 var det = s.tiempo_respuesta_ms !== null ? s.tiempo_respuesta_ms + 'ms' : '--';
+                if (s.mensaje) det = s.mensaje;
                 html += '<div class="medido-item">' +
                     '<div class="medido-item__estado medido-item__estado--' + s.estado + '"></div>' +
                     '<div class="medido-item__nombre">' + s.servicio + '</div>' +
