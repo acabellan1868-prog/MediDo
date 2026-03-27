@@ -29,7 +29,7 @@ SERVICIOS = [
     },
     {
         "nombre": "redo",
-        "url": "http://192.168.31.131:8083/api/resumen",
+        "url": "http://host.docker.internal:8083/api/resumen",
         "esperado": [200],
     },
     {
