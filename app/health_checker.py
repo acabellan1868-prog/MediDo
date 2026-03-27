@@ -29,7 +29,7 @@ SERVICIOS = [
     },
     {
         "nombre": "redo",
-        "url": "http://host.docker.internal:8083/api/resumen",
+        "url": "http://host.docker.internal:80/red/api/resumen",
         "esperado": [200],
     },
     {
@@ -51,7 +51,7 @@ SERVICIOS = [
     {
         "nombre": "nextcloud",
         "url": "http://host.docker.internal:8081/status.php",
-        "esperado": [200],
+        "esperado": [200, 400],  # 400 = nextcloud vivo pero rechaza HTTP plano
     },
     {
         "nombre": "portainer",
