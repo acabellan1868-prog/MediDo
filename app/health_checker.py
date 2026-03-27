@@ -55,7 +55,7 @@ SERVICIOS = [
     },
     {
         "nombre": "portainer",
-        "url": "https://host.docker.internal:9443/api/status",
+        "url": "http://192.168.31.131:9000/api/status",
         "esperado": [200],
     },
 ]
