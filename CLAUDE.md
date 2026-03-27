@@ -67,6 +67,29 @@ y lo sirve desde `portal/static/` del repo hogarOS.
 
 ---
 
+## Health checks — URLs y notas
+
+| Servicio | URL | Notas |
+|---|---|---|
+| portal | `http://host.docker.internal:80/` | Nginx del portal |
+| fido | `http://fido:8080/api/resumen` | Por nombre de contenedor (misma red bridge) |
+| redo | `http://host.docker.internal:8083/api/resumen` | `network_mode:host` → usar host.docker.internal, NO la IP LAN ni 192.168.x.x |
+| hogar-api | `http://hogar-api:8080/lanzador` | Por nombre de contenedor |
+| home-assistant | `http://192.168.31.132:8123/api/` | IP directa; acepta 200 y 401 |
+| kryptonite | `http://host.docker.internal:5000/portafolio` | Servicio en el host |
+| nextcloud | `http://host.docker.internal:8081/status.php` | Acepta 200 y 400 (rechaza HTTP plano con trusted_domains) |
+| portainer | `http://192.168.31.131:9000/api/status` | HTTP en puerto 9000, no HTTPS 9443 |
+
+### Por que redo usa host.docker.internal y no la IP LAN
+
+ReDo corre con `network_mode: host`, sin mapeo de puertos (`ports:`).
+Docker no crea reglas iptables para ese caso, por lo que el trafico
+desde la red bridge al IP LAN del host (192.168.31.131:8083) es rechazado.
+`host.docker.internal` resuelve al gateway del bridge (172.28.0.1),
+que si es alcanzable desde los contenedores — igual que hace nginx.
+
+---
+
 ## API
 
 | Metodo | Ruta | Descripcion |
