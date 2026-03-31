@@ -100,8 +100,9 @@ que si es alcanzable desde los contenedores — igual que hace nginx.
 | GET | `/api/contenedores` | Lista de contenedores Docker |
 | GET | `/api/servicios` | Ultimo health check de cada servicio |
 | GET | `/api/servicios/{nombre}/historial` | Historial de un servicio |
-| GET | `/api/alertas` | Alertas activas y recientes |
+| GET | `/api/alertas` | Alertas: `modulo: "medido"`, activas primero, limite 50 |
 | POST | `/api/alertas/{id}/resolver` | Marcar alerta como resuelta |
+| DELETE | `/api/alertas/{id}` | Eliminar alerta |
 
 ---
 
