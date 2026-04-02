@@ -4,11 +4,12 @@
 
 **Fecha:** 2026-04-03
 
-Fase 5 (Tracking de Claude Code) completada: endpoints POST y GET resumen operativos,
-tarjeta en portal mostrando estadísticas globales (últimas 5h, semana, mes).
+Fase 5b (Pestaña CLAUDE Code) implementada y pusheada a GitHub.
+Endpoint GET /api/claude/sesiones completo (filtros por período y proyecto).
+Frontend: nueva pestaña con tabla de sesiones, filtros dinámicos, sumas.
 
-**Próximo:** Fase 5b — Pestaña "CLAUDE Code" en MediDo con historial detallado de sesiones
-individuales (tabla filtrable por período y proyecto, sumas de tokens y coste).
+**Status:** Esperando testing en VM 101 (bash actualizar.sh en progreso).
+**Próximo:** Marcar Fase 5b como ✅ tras verificación en portal.
 
 ---
 

@@ -105,6 +105,7 @@ que si es alcanzable desde los contenedores — igual que hace nginx.
 | DELETE | `/api/alertas/{id}` | Eliminar alerta |
 | **POST** | **`/api/claude/sesion`** | **Recibe evento de Claude Code (hook), guarda en BD (idempotente)** |
 | **GET** | **`/api/claude/resumen`** | **Agrega sesiones por período: día/semana/mes con presupuesto** |
+| **GET** | **`/api/claude/sesiones`** | **Lista sesiones individuales con filtros (periodo, proyecto, limite)** |
 
 ---
 
