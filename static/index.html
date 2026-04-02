@@ -449,6 +449,9 @@
             <button class="medido-tab" data-tab="servicios" onclick="cambiarTab('servicios')">Servicios</button>
             <button class="medido-tab" data-tab="historial" onclick="cambiarTab('historial')">Historial</button>
             <button class="medido-tab" data-tab="alertas" onclick="cambiarTab('alertas')">Alertas</button>
+            <button class="medido-tab" data-tab="claude" onclick="cambiarTab('claude')">
+                <span class="material-symbols-outlined">code</span> Claude Code
+            </button>
         </div>
 
         <!-- ═══ PANEL: General ═══ -->
@@ -545,6 +548,67 @@
             </div>
         </div>
 
+        <!-- ═══ PANEL: Claude Code ═══ -->
+        <div class="medido-panel" id="panelClaude">
+            <div class="medido-seccion">
+                <div class="medido-seccion__titulo">
+                    <span class="material-symbols-outlined">code</span> Sesiones Claude Code
+                </div>
+
+                <!-- Filtros -->
+                <div style="display: flex; gap: var(--gap-sm); margin-bottom: var(--gap-md); flex-wrap: wrap;">
+                    <select id="filtroPeriodo" style="flex: 1; min-width: 120px;">
+                        <option value="dia">Hoy</option>
+                        <option value="semana">Esta semana</option>
+                        <option value="mes" selected>Este mes</option>
+                    </select>
+                    <select id="filtroProyecto" style="flex: 1; min-width: 120px;">
+                        <option value="">Proyecto: Todos</option>
+                    </select>
+                    <button class="hogar-boton" onclick="cargarSesionesClaudeAPI()" style="flex-shrink: 0;">
+                        Cargar
+                    </button>
+                </div>
+
+                <!-- Tabla -->
+                <div class="hogar-tabla-wrap">
+                    <table class="hogar-tabla">
+                        <thead>
+                            <tr>
+                                <th>Fecha/Hora</th>
+                                <th>Proyecto</th>
+                                <th>Input Tok</th>
+                                <th>Output Tok</th>
+                                <th>Cache Tok</th>
+                                <th>Coste USD</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaSesionesClaudeAPI">
+                            <tr><td colspan="6" class="medido-sin-datos">Cargando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Totales -->
+                <div style="margin-top: var(--gap-lg); padding: var(--gap-md); background: var(--surface-container-lowest); border-radius: var(--radio-md);">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--gap-md);">
+                        <div>
+                            <div class="medido-tarjeta__label">SESIONES</div>
+                            <div class="medido-tarjeta__valor" id="sumaSesiones">0</div>
+                        </div>
+                        <div>
+                            <div class="medido-tarjeta__label">TOKENS TOTAL</div>
+                            <div class="medido-tarjeta__valor" id="sumaTokens">0</div>
+                        </div>
+                        <div>
+                            <div class="medido-tarjeta__label">COSTE USD</div>
+                            <div class="medido-tarjeta__valor" id="sumaCoste">$0.00</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </main>
 
     <script>
@@ -613,6 +677,7 @@
         if (nombre === 'servicios') cargarServicios();
         if (nombre === 'historial') cargarHistorial();
         if (nombre === 'alertas') cargarAlertas();
+        if (nombre === 'claude') cargarSesionesClaudeAPI();
     }
 
     // ── Helpers ──
@@ -921,6 +986,81 @@
         .catch(function() {});
     }
 
+    // ── Claude Code ──
+
+    function cargarProyectosClaude() {
+        var periodo = document.getElementById('filtroPeriodo').value;
+        var url = API + '/claude/sesiones?periodo=' + periodo;
+
+        fetch(url)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            var selectProyecto = document.getElementById('filtroProyecto');
+            var proyectos = data.proyectos_unicos || [];
+
+            // Mantener opción "Todos"
+            selectProyecto.innerHTML = '<option value="">Proyecto: Todos</option>';
+
+            // Agregar cada proyecto
+            proyectos.forEach(function(p) {
+                var opt = document.createElement('option');
+                opt.value = p;
+                opt.textContent = p;
+                selectProyecto.appendChild(opt);
+            });
+        });
+    }
+
+    function cargarSesionesClaudeAPI() {
+        var periodo = document.getElementById('filtroPeriodo').value;
+        var proyecto = document.getElementById('filtroProyecto').value;
+
+        var url = API + '/claude/sesiones?periodo=' + periodo;
+        if (proyecto) url += '&proyecto=' + encodeURIComponent(proyecto);
+
+        fetch(url)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            // Renderizar tabla
+            var tbody = document.getElementById('tablaSesionesClaudeAPI');
+            var sesiones = data.sesiones || [];
+
+            if (sesiones.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="medido-sin-datos">Sin sesiones en este período</td></tr>';
+            } else {
+                tbody.innerHTML = sesiones.map(function(s) {
+                    var fecha = new Date(s.fecha_fin);
+                    var fechaStr = fecha.toLocaleDateString('es-ES');
+                    var horaStr = fecha.toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'});
+
+                    var cacheTok = s.cache_read_tokens + s.cache_creation_tokens;
+
+                    return '<tr>' +
+                        '<td>' + fechaStr + ' ' + horaStr + '</td>' +
+                        '<td>' + s.proyecto + '</td>' +
+                        '<td>' + s.input_tokens.toLocaleString() + '</td>' +
+                        '<td>' + s.output_tokens.toLocaleString() + '</td>' +
+                        '<td>' + cacheTok.toLocaleString() + '</td>' +
+                        '<td>$' + s.coste_total_usd.toFixed(4) + '</td>' +
+                    '</tr>';
+                }).join('');
+            }
+
+            // Actualizar sumas
+            document.getElementById('sumaSesiones').textContent = data.totales.sesiones_count;
+            document.getElementById('sumaTokens').textContent = data.totales.tokens_total.toLocaleString();
+            document.getElementById('sumaCoste').textContent = '$' + data.totales.coste_total_usd.toFixed(4);
+
+            // Actualizar dropdown de proyectos
+            cargarProyectosClaude();
+        })
+        .catch(function(err) {
+            console.error('Error cargando sesiones Claude:', err);
+            document.getElementById('tablaSesionesClaudeAPI').innerHTML =
+                '<tr><td colspan="6" class="medido-sin-datos">Error cargando datos</td></tr>';
+        });
+    }
+
     // ── Inicializacion ──
     cargarGeneral();
 
@@ -936,6 +1076,7 @@
             if (tab === 'servicios') cargarServicios();
             if (tab === 'historial') cargarHistorial();
             if (tab === 'alertas') cargarAlertas();
+            if (tab === 'claude') cargarSesionesClaudeAPI();
         }
     }, 60000);
     </script>

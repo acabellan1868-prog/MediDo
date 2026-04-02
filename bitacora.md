@@ -1,5 +1,33 @@
 # Bitácora — MediDo
 
+## 2026-04-03
+
+### Fase 5b — Pestaña "CLAUDE Code" en MediDo
+
+Se implementa pestaña con historial detallado de sesiones individuales de Claude Code,
+permitiendo filtrar por período y proyecto para detectar sesiones con alto gasto.
+
+**Cambios:**
+- `app/rutas/claude.py`: Nuevo endpoint `GET /api/claude/sesiones`
+  - Query params: `periodo` (dia|semana|mes), `proyecto` (opcional), `limite` (defecto 1000)
+  - Devuelve: sesiones individuales, totales agregados (count, tokens, coste), lista de proyectos únicos
+  - Lógica de rango de fechas reutilizada de `resumen()`
+
+- `static/index.html`: Nueva pestaña y panel
+  - Botón "Claude Code" después de Alertas en menú de tabs
+  - Panel con filtros (período + proyecto dinámico) y tabla de sesiones
+  - Tabla: Fecha/Hora | Proyecto | Input Tok | Output Tok | Cache Tok | Coste USD
+  - Sumas: Sesiones | Tokens Total | Coste Total USD
+  - Funciones JavaScript: `cargarSesionesClaudeAPI()`, `cargarProyectosClaude()`
+  - Integrado en `cambiarTab('claude')` y refresco automático (60s)
+
+**Arquitectura:**
+- Endpoint calcula proyectos únicos para llenar dropdown dinámico
+- Tabla renderizada con `map()` → `join('')` (patrón ReDo)
+- Sumas recalculadas en cada carga (sin caché local)
+
+---
+
 ## 2026-04-02
 
 ### Fase 13d — Limites de tokens en Claude tracking

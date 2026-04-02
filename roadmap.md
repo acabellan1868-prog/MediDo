@@ -2,11 +2,13 @@
 
 ## Estado actual
 
-**Fecha:** 2026-03-27
+**Fecha:** 2026-04-03
 
-Primera version desplegada en VM 101 y funcionando.
-Recolecta metricas de Proxmox, estado de contenedores Docker,
-health checks de servicios y genera alertas via NTFY.
+Fase 5 (Tracking de Claude Code) completada: endpoints POST y GET resumen operativos,
+tarjeta en portal mostrando estadísticas globales (últimas 5h, semana, mes).
+
+**Próximo:** Fase 5b — Pestaña "CLAUDE Code" en MediDo con historial detallado de sesiones
+individuales (tabla filtrable por período y proyecto, sumas de tokens y coste).
 
 ---
 
@@ -67,19 +69,31 @@ health checks de servicios y genera alertas via NTFY.
 - [x] Actualizado drawer de ReDo (añadido enlace a Salud, portal al final)
 - [x] Actualizado drawer de FiDo (añadidos enlaces a Red y Salud, portal al final)
 
-### Fase 5 — Tracking de Claude Code 🔄
+### Fase 5 — Tracking de Claude Code ✅
 
 Recolecta datos de uso de Claude Code desde Windows (tokens, coste estimado).
 El hook de Claude Code (Fase 13a) POST a estos endpoints.
 
-- [ ] 🤖 Tabla `tracking_claude` en esquema.sql
-- [ ] 🤖 Variables de entorno: `CLAUDE_PRESUPUESTO_USD`, `CLAUDE_DIA_RESETEO`
-- [ ] 🤖 Router `/api/claude` con:
-  - [ ] POST `/api/claude/sesion` — recibe eventos del hook (idempotente)
-  - [ ] GET `/api/claude/resumen` — agrega por período (día/semana/mes)
-- [ ] 🤖 Documentar en CLAUDE.md
+- [x] 🤖 Tabla `tracking_claude` en esquema.sql
+- [x] 🤖 Variables de entorno: `CLAUDE_PRESUPUESTO_EUR`, `CLAUDE_DIA_RESETEO`, `CLAUDE_LIMITE_5H_TOKENS`, `CLAUDE_LIMITE_SEMANA_TOKENS`
+- [x] 🤖 Router `/api/claude` con:
+  - [x] POST `/api/claude/sesion` — recibe eventos del hook (idempotente)
+  - [x] GET `/api/claude/resumen` — agrega por período (día/semana/mes) con presupuesto y limites
+- [x] 👤 Tarjeta en portal mostrando: sesiones, tokens, coste, presupuesto, limites 5h/semana
 
-**Próxima:** Fase 13c (tarjeta portal) consumirá GET /resumen
+### Fase 5b — Pestaña CLAUDE Code en MediDo 🔄
+
+Tabla detallada de sesiones individuales con filtros por período y proyecto.
+Permite detectar sesiones que se "fueron de madre" en gastos o tokens.
+
+- [ ] 🤖 Endpoint `GET /api/claude/sesiones` con query params: `periodo`, `proyecto`, `limite`
+  - Devuelve: sesiones, totales (count, tokens, coste), lista de proyectos únicos
+- [ ] 🤖 Nueva pestaña "Claude Code" en `static/index.html`
+  - Filtros: período (Hoy/Esta semana/Este mes), proyecto (dropdown dinámico)
+  - Tabla: Fecha/Hora | Proyecto | Input Tok | Output Tok | Cache Tok | Coste USD
+  - Sumas: Sesiones | Tokens Total | Coste Total USD
+- [ ] 🤖 Funciones JavaScript: `cargarSesionesClaudeAPI()`, `cargarProyectosClaude()`
+- [ ] 👤 Desplegar en VM 101 y verificar
 
 ---
 

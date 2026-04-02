@@ -356,3 +356,132 @@ def resumen(
         }
 
     return respuesta
+
+
+@ruta.get("/sesiones")
+def listar_sesiones(
+    periodo: Literal["dia", "semana", "mes"] = "mes",
+    proyecto: Optional[str] = None,
+    limite: int = 1000,
+):
+    """
+    Lista sesiones individuales de Claude Code con filtros opcionales.
+
+    Query params:
+    - periodo: 'dia' (24h), 'semana' (7 dias), 'mes' (defecto)
+    - proyecto: nombre de proyecto para filtrar (opcional)
+    - limite: máximo de sesiones a devolver (defecto: 1000, máximo: 10000)
+
+    Responde con:
+    - sesiones: lista de sesiones con tokens y coste
+    - totales: agregaciones (count, tokens, coste) para sesiones filtradas
+    - rango: fechas desde/hasta del período seleccionado
+    - proyectos_unicos: lista de todos los proyectos disponibles en el período
+    """
+
+    # Validar límite
+    limite = min(limite, 10000)
+
+    # Parsear fecha_hasta (ahora)
+    fecha_fin = datetime.now()
+
+    # Calcular rango de fechas según el período
+    if periodo == "dia":
+        fecha_inicio = fecha_fin - timedelta(days=1)
+        fecha_inicio = fecha_inicio.replace(hour=0, minute=0, second=0, microsecond=0)
+    elif periodo == "semana":
+        fecha_inicio = fecha_fin - timedelta(days=7)
+        fecha_inicio = fecha_inicio.replace(hour=0, minute=0, second=0, microsecond=0)
+    elif periodo == "mes":
+        # Logica de reseteo mensual (igual que en resumen())
+        if CLAUDE_DIA_RESETEO:
+            hoy = fecha_fin.date()
+            if hoy.day >= CLAUDE_DIA_RESETEO:
+                mes_inicio = hoy.replace(day=CLAUDE_DIA_RESETEO)
+            else:
+                mes_anterior = hoy.replace(day=1) - timedelta(days=1)
+                mes_inicio = mes_anterior.replace(day=CLAUDE_DIA_RESETEO)
+            fecha_inicio = datetime.combine(mes_inicio, datetime.min.time())
+        else:
+            mes_inicio = fecha_fin.date().replace(day=1)
+            fecha_inicio = datetime.combine(mes_inicio, datetime.min.time())
+    else:
+        raise HTTPException(400, f"periodo invalido: {periodo}")
+
+    # Fechas ISO para consultas
+    fecha_fin_str = fecha_fin.replace(hour=23, minute=59, second=59, microsecond=999999).isoformat()
+    fecha_inicio_str = fecha_inicio.replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
+
+    # Construir WHERE dinámicamente
+    where = ["datetime(fecha_fin) BETWEEN ? AND ?"]
+    parametros = [fecha_inicio_str, fecha_fin_str]
+
+    if proyecto:
+        where.append("proyecto = ?")
+        parametros.append(proyecto)
+
+    where_clause = " WHERE " + " AND ".join(where)
+
+    # Consultar sesiones ordenadas por fecha descendente
+    sql_sesiones = f"""
+        SELECT
+            session_id, fecha_fin, proyecto,
+            input_tokens, output_tokens, cache_read_tokens, cache_creation_tokens,
+            coste_input_usd, coste_output_usd, coste_cache_usd,
+            coste_input_usd + coste_output_usd + coste_cache_usd as coste_total
+        FROM tracking_claude
+        {where_clause}
+        ORDER BY fecha_fin DESC
+        LIMIT ?
+    """
+    parametros_sesiones = parametros + [limite]
+    sesiones_raw = bd.consultar_todos(sql_sesiones, tuple(parametros_sesiones))
+
+    # Consultar agregaciones
+    sql_agg = f"""
+        SELECT
+            COUNT(*) as sesiones_count,
+            COALESCE(SUM(input_tokens + output_tokens + cache_read_tokens + cache_creation_tokens), 0) as tokens_total,
+            COALESCE(SUM(coste_input_usd + coste_output_usd + coste_cache_usd), 0) as coste_total
+        FROM tracking_claude
+        {where_clause}
+    """
+    agg = bd.consultar_uno(sql_agg, tuple(parametros))
+
+    # Consultar proyectos únicos disponibles en el período (sin filtro de proyecto)
+    sql_proyectos = f"""
+        SELECT DISTINCT proyecto
+        FROM tracking_claude
+        WHERE datetime(fecha_fin) BETWEEN ? AND ?
+        ORDER BY proyecto
+    """
+    proyectos_raw = bd.consultar_todos(sql_proyectos, (fecha_inicio_str, fecha_fin_str))
+    proyectos_unicos = [p["proyecto"] for p in proyectos_raw]
+
+    # Formatear sesiones: agregar coste_total_usd calculado
+    sesiones = []
+    for s in sesiones_raw:
+        sesiones.append({
+            "session_id": s["session_id"],
+            "fecha_fin": s["fecha_fin"],
+            "proyecto": s["proyecto"],
+            "input_tokens": s["input_tokens"],
+            "output_tokens": s["output_tokens"],
+            "cache_read_tokens": s["cache_read_tokens"],
+            "cache_creation_tokens": s["cache_creation_tokens"],
+            "coste_total_usd": round(s["coste_total"], 5),
+        })
+
+    return {
+        "sesiones": sesiones,
+        "totales": {
+            "sesiones_count": agg.get("sesiones_count", 0) if agg else 0,
+            "tokens_total": agg.get("tokens_total", 0) if agg else 0,
+            "coste_total_usd": round(agg.get("coste_total", 0), 5) if agg else 0.0,
+        },
+        "rango": {
+            "fecha_desde": fecha_inicio_str,
+            "fecha_hasta": fecha_fin_str,
+        },
+        "proyectos_unicos": proyectos_unicos,
+    }
