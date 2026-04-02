@@ -13,7 +13,12 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, field_validator
 
 from app import bd
-from app.config import CLAUDE_PRESUPUESTO_EUR, CLAUDE_DIA_RESETEO
+from app.config import (
+    CLAUDE_PRESUPUESTO_EUR,
+    CLAUDE_DIA_RESETEO,
+    CLAUDE_LIMITE_5H_TOKENS,
+    CLAUDE_LIMITE_SEMANA_TOKENS,
+)
 
 logger = logging.getLogger("medido.claude")
 ruta = APIRouter()
@@ -266,6 +271,42 @@ def resumen(
             "output_usd": round(resultado_agg["coste_output"], 5),
             "cache_usd": round(resultado_agg["coste_cache"], 5),
             "total_usd": round(coste_total, 5),
+        },
+    }
+
+    # Agregar limites de tokens (últimas 5h y semana)
+    hace_5h = fecha_fin - timedelta(hours=5)
+    hace_7d = fecha_fin - timedelta(days=7)
+
+    sql_5h = """
+        SELECT COALESCE(SUM(input_tokens + output_tokens + cache_read_tokens + cache_creation_tokens), 0) as tokens_total
+        FROM tracking_claude
+        WHERE datetime(fecha_fin) > ?
+    """
+    resultado_5h = bd.consultar_uno(sql_5h, (hace_5h.isoformat(),))
+    tokens_5h = resultado_5h.get("tokens_total", 0) if resultado_5h else 0
+
+    sql_7d = """
+        SELECT COALESCE(SUM(input_tokens + output_tokens + cache_read_tokens + cache_creation_tokens), 0) as tokens_total
+        FROM tracking_claude
+        WHERE datetime(fecha_fin) > ?
+    """
+    resultado_7d = bd.consultar_uno(sql_7d, (hace_7d.isoformat(),))
+    tokens_7d = resultado_7d.get("tokens_total", 0) if resultado_7d else 0
+
+    pct_5h = (tokens_5h / CLAUDE_LIMITE_5H_TOKENS * 100) if CLAUDE_LIMITE_5H_TOKENS > 0 else 0
+    pct_7d = (tokens_7d / CLAUDE_LIMITE_SEMANA_TOKENS * 100) if CLAUDE_LIMITE_SEMANA_TOKENS > 0 else 0
+
+    respuesta["limites_tokens"] = {
+        "ultimas_5h": {
+            "tokens_usados": tokens_5h,
+            "limite": CLAUDE_LIMITE_5H_TOKENS,
+            "porcentaje_usado": round(pct_5h, 1),
+        },
+        "ultima_semana": {
+            "tokens_usados": tokens_7d,
+            "limite": CLAUDE_LIMITE_SEMANA_TOKENS,
+            "porcentaje_usado": round(pct_7d, 1),
         },
     }
 

@@ -63,3 +63,7 @@ if CLAUDE_DIA_RESETEO:
         raise ValueError(f"Error en CLAUDE_DIA_RESETEO: {e}")
 else:
     CLAUDE_DIA_RESETEO = None
+
+# Claude Code limites de tokens
+CLAUDE_LIMITE_5H_TOKENS = int(os.environ.get("CLAUDE_LIMITE_5H_TOKENS", "200000"))
+CLAUDE_LIMITE_SEMANA_TOKENS = int(os.environ.get("CLAUDE_LIMITE_SEMANA_TOKENS", "4000000"))
