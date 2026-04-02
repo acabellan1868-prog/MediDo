@@ -13,7 +13,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, field_validator
 
 from app import bd
-from app.config import CLAUDE_PRESUPUESTO_USD, CLAUDE_DIA_RESETEO
+from app.config import CLAUDE_PRESUPUESTO_EUR, CLAUDE_DIA_RESETEO
 
 logger = logging.getLogger("medido.claude")
 ruta = APIRouter()
@@ -270,13 +270,13 @@ def resumen(
     }
 
     # Agregar presupuesto si esta configurado
-    if CLAUDE_PRESUPUESTO_USD:
+    if CLAUDE_PRESUPUESTO_EUR:
         porcentaje = (
-            (coste_total / CLAUDE_PRESUPUESTO_USD * 100)
-            if CLAUDE_PRESUPUESTO_USD > 0
+            (coste_total / CLAUDE_PRESUPUESTO_EUR * 100)
+            if CLAUDE_PRESUPUESTO_EUR > 0
             else 0
         )
-        saldo = CLAUDE_PRESUPUESTO_USD - coste_total
+        saldo = CLAUDE_PRESUPUESTO_EUR - coste_total
 
         # Calcular dias restantes hasta proximo reseteo
         if periodo == "mes" and CLAUDE_DIA_RESETEO:
@@ -297,9 +297,9 @@ def resumen(
             dias_restantes = None
 
         respuesta["presupuesto"] = {
-            "presupuesto_usd": CLAUDE_PRESUPUESTO_USD,
+            "presupuesto_eur": CLAUDE_PRESUPUESTO_EUR,
             "porcentaje_usado": round(porcentaje, 1),
-            "saldo_usd": round(saldo, 5),
+            "saldo_eur": round(saldo, 5),
         }
         if dias_restantes is not None:
             respuesta["presupuesto"]["dias_restantes"] = dias_restantes

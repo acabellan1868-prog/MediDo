@@ -40,16 +40,16 @@ CONTENEDORES_IGNORADOS = [
 TZ = os.environ.get("TZ", "Europe/Madrid")
 
 # Claude Code tracking (Fase 13b)
-CLAUDE_PRESUPUESTO_USD = os.environ.get("CLAUDE_PRESUPUESTO_USD", "")
-if CLAUDE_PRESUPUESTO_USD:
+CLAUDE_PRESUPUESTO_EUR = os.environ.get("CLAUDE_PRESUPUESTO_EUR", "")
+if CLAUDE_PRESUPUESTO_EUR:
     try:
-        CLAUDE_PRESUPUESTO_USD = float(CLAUDE_PRESUPUESTO_USD)
+        CLAUDE_PRESUPUESTO_EUR = float(CLAUDE_PRESUPUESTO_EUR)
     except ValueError:
         raise ValueError(
-            f"CLAUDE_PRESUPUESTO_USD debe ser un numero flotante, got {CLAUDE_PRESUPUESTO_USD}"
+            f"CLAUDE_PRESUPUESTO_EUR debe ser un numero flotante, got {CLAUDE_PRESUPUESTO_EUR}"
         )
 else:
-    CLAUDE_PRESUPUESTO_USD = None
+    CLAUDE_PRESUPUESTO_EUR = None
 
 CLAUDE_DIA_RESETEO = os.environ.get("CLAUDE_DIA_RESETEO", "")
 if CLAUDE_DIA_RESETEO:
