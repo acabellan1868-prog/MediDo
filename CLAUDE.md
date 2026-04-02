@@ -103,6 +103,8 @@ que si es alcanzable desde los contenedores — igual que hace nginx.
 | GET | `/api/alertas` | Alertas: `modulo: "medido"`, activas primero, limite 50 |
 | POST | `/api/alertas/{id}/resolver` | Marcar alerta como resuelta |
 | DELETE | `/api/alertas/{id}` | Eliminar alerta |
+| **POST** | **`/api/claude/sesion`** | **Recibe evento de Claude Code (hook), guarda en BD (idempotente)** |
+| **GET** | **`/api/claude/resumen`** | **Agrega sesiones por período: día/semana/mes con presupuesto** |
 
 ---
 
@@ -121,6 +123,8 @@ que si es alcanzable desde los contenedores — igual que hace nginx.
 | `MEDIDO_INTERVALO_HEALTH` | Intervalo health checks en segundos (defecto 60) |
 | `MEDIDO_INTERVALO_METRICAS` | Intervalo metricas en segundos (defecto 300) |
 | `MEDIDO_DIAS_RETENCION` | Dias de historial a mantener (defecto 90) |
+| **`CLAUDE_PRESUPUESTO_USD`** | **Presupuesto mensual de Claude Code en USD (opcional)** |
+| **`CLAUDE_DIA_RESETEO`** | **Día del mes de reseteo del presupuesto 1-31 (defecto: 1)** |
 
 ---
 

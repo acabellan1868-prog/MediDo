@@ -67,31 +67,45 @@ health checks de servicios y genera alertas via NTFY.
 - [x] Actualizado drawer de ReDo (añadido enlace a Salud, portal al final)
 - [x] Actualizado drawer de FiDo (añadidos enlaces a Red y Salud, portal al final)
 
+### Fase 5 — Tracking de Claude Code 🔄
+
+Recolecta datos de uso de Claude Code desde Windows (tokens, coste estimado).
+El hook de Claude Code (Fase 13a) POST a estos endpoints.
+
+- [ ] 🤖 Tabla `tracking_claude` en esquema.sql
+- [ ] 🤖 Variables de entorno: `CLAUDE_PRESUPUESTO_USD`, `CLAUDE_DIA_RESETEO`
+- [ ] 🤖 Router `/api/claude` con:
+  - [ ] POST `/api/claude/sesion` — recibe eventos del hook (idempotente)
+  - [ ] GET `/api/claude/resumen` — agrega por período (día/semana/mes)
+- [ ] 🤖 Documentar en CLAUDE.md
+
+**Próxima:** Fase 13c (tarjeta portal) consumirá GET /resumen
+
 ---
 
 ## Pendiente / Mejoras futuras
 
-### Fase 5 — Tarjeta en el portal
+### Fase 6 — Tarjeta en el portal
 
 - [ ] Tarjeta "Salud del sistema" en el grid bento del portal
 - [ ] Consume `/salud/api/resumen`
 - [ ] Muestra semaforo + CPU/RAM/disco + contenedores + servicios
 
-### Fase 6 — Mejoras de metricas
+### Fase 7 — Mejoras de metricas
 
 - [ ] Disco real de las VMs (via QEMU guest agent)
 - [ ] Deteccion de disco USB externo en almacenamiento
 - [ ] Metricas por contenedor (CPU%, memoria) — actualmente desactivado por rendimiento
 - [ ] Estado de backups (consultar hogar-api /api/backup)
 
-### Fase 7 — Mejoras de UI
+### Fase 8 — Mejoras de UI
 
 - [ ] Responsive completo (probar en movil)
 - [ ] Graficas mas detalladas (zoom, tooltip, multiples periodos)
 - [ ] Detalle de cada VM al hacer clic
 - [ ] Historial de health checks por servicio (grafica de latencia)
 
-### Fase 8 — Configuracion
+### Fase 9 — Configuracion
 
 - [ ] Pantalla de settings en MediDo (umbrales, intervalos, servicios a monitorizar)
 - [ ] Gestion de contenedores ignorados desde la UI

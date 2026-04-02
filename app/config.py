@@ -38,3 +38,28 @@ CONTENEDORES_IGNORADOS = [
 
 # Zona horaria
 TZ = os.environ.get("TZ", "Europe/Madrid")
+
+# Claude Code tracking (Fase 13b)
+CLAUDE_PRESUPUESTO_USD = os.environ.get("CLAUDE_PRESUPUESTO_USD", "")
+if CLAUDE_PRESUPUESTO_USD:
+    try:
+        CLAUDE_PRESUPUESTO_USD = float(CLAUDE_PRESUPUESTO_USD)
+    except ValueError:
+        raise ValueError(
+            f"CLAUDE_PRESUPUESTO_USD debe ser un numero flotante, got {CLAUDE_PRESUPUESTO_USD}"
+        )
+else:
+    CLAUDE_PRESUPUESTO_USD = None
+
+CLAUDE_DIA_RESETEO = os.environ.get("CLAUDE_DIA_RESETEO", "")
+if CLAUDE_DIA_RESETEO:
+    try:
+        CLAUDE_DIA_RESETEO = int(CLAUDE_DIA_RESETEO)
+        if not (1 <= CLAUDE_DIA_RESETEO <= 31):
+            raise ValueError(
+                f"CLAUDE_DIA_RESETEO debe estar entre 1 y 31, got {CLAUDE_DIA_RESETEO}"
+            )
+    except ValueError as e:
+        raise ValueError(f"Error en CLAUDE_DIA_RESETEO: {e}")
+else:
+    CLAUDE_DIA_RESETEO = None

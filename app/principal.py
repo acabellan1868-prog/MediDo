@@ -18,7 +18,7 @@ from app.recolector_proxmox import recolectar_proxmox
 from app.recolector_docker import recolectar_docker
 from app.health_checker import ejecutar_health_checks
 from app.alertador import evaluar_metricas, evaluar_contenedores, evaluar_servicios, limpiar_historial
-from app.rutas import resumen, proxmox, contenedores, servicios, alertas
+from app.rutas import resumen, proxmox, contenedores, servicios, alertas, claude
 
 # Configurar logging
 logging.basicConfig(
@@ -118,6 +118,7 @@ app.include_router(proxmox.ruta, prefix="/api/proxmox", tags=["Proxmox"])
 app.include_router(contenedores.ruta, prefix="/api/contenedores", tags=["Contenedores"])
 app.include_router(servicios.ruta, prefix="/api/servicios", tags=["Servicios"])
 app.include_router(alertas.ruta, prefix="/api/alertas", tags=["Alertas"])
+app.include_router(claude.ruta, prefix="/api/claude", tags=["Claude Code"])
 
 # ---- Servir frontend estatico (DEBE ir al final, es catch-all) ----
 app.mount("/", StaticFiles(directory="static", html=True), name="static")
