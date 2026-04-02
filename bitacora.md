@@ -2,6 +2,30 @@
 
 ## 2026-04-02
 
+### Fase 13d — Limites de tokens en Claude tracking
+
+Se agrega soporte para limites de tokens en ventanas móviles (rolling windows).
+
+**Cambios:**
+- `config.py`: Variables `CLAUDE_LIMITE_5H_TOKENS` (200k) y `CLAUDE_LIMITE_SEMANA_TOKENS` (4M)
+- `rutas/claude.py`: Queries para sumar tokens en últimas 5h y últimas 7 días
+- API `/claude/resumen` devuelve nueva sección `limites_tokens` con porcentajes
+- `hogarOS/portal`: Tarjeta muestra 2 barras de progreso para limites (warning >=75%, danger >=90%)
+
+**Arquitectura:** Ventanas móviles basadas en `datetime(fecha_fin)`, sin reseteo manual.
+
+**Commits:**
+- MediDo: `13d6cb1`
+- hogarOS: `515b058`
+
+---
+
+### Fase 13c — Tarjeta "Asistente IA" en portal
+
+Se implementa tarjeta en dashboard mostrando datos de Claude Code (sesiones, tokens, coste, presupuesto).
+
+---
+
 ### Fase 5 — Tracking de Claude Code (Fase 13b de hogarOS)
 
 Se inicia implementación de endpoints para recolectar datos de sesiones de Claude Code desde Windows.
