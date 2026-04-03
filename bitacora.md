@@ -2,6 +2,22 @@
 
 ## 2026-04-03
 
+### Fase 5c — Borrado de sesiones individuales en MediDo
+
+Añadida gestión de sesiones en la pestaña Claude Code para poder limpiar datos
+inconsistentes durante el período de pruebas del sistema de tracking.
+
+**Cambios:**
+- `app/rutas/claude.py`: Nuevo endpoint `DELETE /api/claude/sesiones/{session_id}`
+  - Devuelve 404 si la sesión no existe
+  - Elimina la fila de `tracking_claude` y confirma con `{"ok": true}`
+- `static/index.html`: Columna extra en tabla con botón de borrado por fila
+  - Botón rojo (hogar-boton--peligro) con icono papelera
+  - Confirmación antes de eliminar
+  - Recarga automática de la tabla tras el borrado
+
+---
+
 ### Bug — Hook tracker: tokens siempre a 0
 
 **Síntoma:** Todas las sesiones registradas tenían `input_tokens`, `output_tokens` y `cache_*_tokens` a 0.

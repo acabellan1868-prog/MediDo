@@ -8,8 +8,8 @@ Fase 5b completada. Pestaña CLAUDE Code en MediDo funcionando.
 Bug corregido: el hook `claude-tracker.py` leía tokens del nivel raíz del JSONL en vez
 de `message.usage` — tokens siempre salían a 0. Fix aplicado y cola limpiada.
 
-**Status:** Sistema de tracking de Claude Code operativo end-to-end.
-**Próximo:** Verificar en portal que la próxima sesión registra tokens reales.
+**Status:** Sistema de tracking de Claude Code operativo end-to-end. Borrado de sesiones disponible para limpieza durante pruebas.
+**Próximo:** Desplegar en VM 101 y verificar que llegan tokens reales en la próxima sesión.
 
 ---
 
@@ -81,6 +81,15 @@ El hook de Claude Code (Fase 13a) POST a estos endpoints.
   - [x] POST `/api/claude/sesion` — recibe eventos del hook (idempotente)
   - [x] GET `/api/claude/resumen` — agrega por período (día/semana/mes) con presupuesto y limites
 - [x] 👤 Tarjeta en portal mostrando: sesiones, tokens, coste, presupuesto, limites 5h/semana
+
+### Fase 5c — Borrado de sesiones en MediDo ✅
+
+Gestión básica de sesiones para limpiar datos durante el período de pruebas.
+
+- [x] 🤖 Endpoint `DELETE /api/claude/sesiones/{session_id}`
+- [x] 🤖 Botón de borrado por fila en la tabla de sesiones (con confirmación)
+
+---
 
 ### Fase 5b — Pestaña CLAUDE Code en MediDo ✅
 

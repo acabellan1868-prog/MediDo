@@ -358,6 +358,19 @@ def resumen(
     return respuesta
 
 
+@ruta.delete("/sesiones/{session_id}")
+def eliminar_sesion(session_id: str):
+    """Elimina una sesión individual de la BD por su session_id."""
+    resultado = bd.consultar_uno(
+        "SELECT session_id FROM tracking_claude WHERE session_id = ?", (session_id,)
+    )
+    if not resultado:
+        raise HTTPException(404, f"Sesión no encontrada: {session_id}")
+    bd.ejecutar("DELETE FROM tracking_claude WHERE session_id = ?", (session_id,))
+    logger.info(f"Sesión eliminada: {session_id}")
+    return {"ok": True, "session_id": session_id}
+
+
 @ruta.get("/sesiones")
 def listar_sesiones(
     periodo: Literal["dia", "semana", "mes"] = "mes",

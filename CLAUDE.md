@@ -106,6 +106,7 @@ que si es alcanzable desde los contenedores — igual que hace nginx.
 | **POST** | **`/api/claude/sesion`** | **Recibe evento de Claude Code (hook), guarda en BD (idempotente)** |
 | **GET** | **`/api/claude/resumen`** | **Agrega sesiones por período: día/semana/mes con presupuesto** |
 | **GET** | **`/api/claude/sesiones`** | **Lista sesiones individuales con filtros (periodo, proyecto, limite)** |
+| **DELETE** | **`/api/claude/sesiones/{session_id}`** | **Elimina una sesión individual (404 si no existe)** |
 
 ---
 

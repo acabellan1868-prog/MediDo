@@ -581,10 +581,11 @@
                                 <th>Output Tok</th>
                                 <th>Cache Tok</th>
                                 <th>Coste USD</th>
+                                <th></th>
                             </tr>
                         </thead>
                         <tbody id="tablaSesionesClaudeAPI">
-                            <tr><td colspan="6" class="medido-sin-datos">Cargando...</td></tr>
+                            <tr><td colspan="7" class="medido-sin-datos">Cargando...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -1026,7 +1027,7 @@
             var sesiones = data.sesiones || [];
 
             if (sesiones.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="medido-sin-datos">Sin sesiones en este período</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" class="medido-sin-datos">Sin sesiones en este período</td></tr>';
             } else {
                 tbody.innerHTML = sesiones.map(function(s) {
                     var fecha = new Date(s.fecha_fin);
@@ -1042,6 +1043,10 @@
                         '<td>' + s.output_tokens.toLocaleString() + '</td>' +
                         '<td>' + cacheTok.toLocaleString() + '</td>' +
                         '<td>$' + s.coste_total_usd.toFixed(4) + '</td>' +
+                        '<td><button class="hogar-boton hogar-boton--peligro" style="padding: 4px 8px;" ' +
+                            'onclick="eliminarSesionClaude(\'' + s.session_id + '\')" title="Eliminar sesión">' +
+                            '<span class="material-symbols-outlined">delete</span>' +
+                        '</button></td>' +
                     '</tr>';
                 }).join('');
             }
@@ -1058,6 +1063,18 @@
             console.error('Error cargando sesiones Claude:', err);
             document.getElementById('tablaSesionesClaudeAPI').innerHTML =
                 '<tr><td colspan="6" class="medido-sin-datos">Error cargando datos</td></tr>';
+        });
+    }
+
+    function eliminarSesionClaude(sessionId) {
+        if (!confirm('¿Eliminar esta sesión?')) return;
+        fetch(API + '/claude/sesiones/' + encodeURIComponent(sessionId), { method: 'DELETE' })
+        .then(function(r) {
+            if (!r.ok) throw new Error('Error ' + r.status);
+            cargarSesionesClaudeAPI();
+        })
+        .catch(function(err) {
+            alert('Error al eliminar la sesión: ' + err.message);
         });
     }
 
