@@ -8,8 +8,8 @@ Fase 5b completada. Pestaña CLAUDE Code en MediDo funcionando.
 Bug corregido: el hook `claude-tracker.py` leía tokens del nivel raíz del JSONL en vez
 de `message.usage` — tokens siempre salían a 0. Fix aplicado y cola limpiada.
 
-**Status:** Sistema de tracking de Claude Code operativo end-to-end. Borrado de sesiones disponible para limpieza durante pruebas.
-**Próximo:** Desplegar en VM 101 y verificar que llegan tokens reales en la próxima sesión.
+**Status:** Fase 5d implementada. Sesiones con desglose expandible por respuesta, migración automática de BD en producción.
+**Próximo:** Desplegar en VM 101 (`bash actualizar.sh`) y verificar migración + tabla expandible.
 
 ---
 
@@ -81,6 +81,19 @@ El hook de Claude Code (Fase 13a) POST a estos endpoints.
   - [x] POST `/api/claude/sesion` — recibe eventos del hook (idempotente)
   - [x] GET `/api/claude/resumen` — agrega por período (día/semana/mes) con presupuesto y limites
 - [x] 👤 Tarjeta en portal mostrando: sesiones, tokens, coste, presupuesto, limites 5h/semana
+
+### Fase 5d — Desglose de respuestas por sesión ✅
+
+Una fila por sesión con opción de expandir para ver cada respuesta individual.
+
+- [x] 🤖 Quitar `UNIQUE` de `session_id` en `esquema.sql`
+- [x] 🤖 `migrar_bd()` en `bd.py` — migración automática de BD existente en producción
+- [x] 🤖 `POST /sesion` inserta siempre (sin UNIQUE, sin dedup)
+- [x] 🤖 `GET /sesiones` agrupa por `session_id` con `MAX()` + `num_respuestas`
+- [x] 🤖 `GET /sesiones/{session_id}` — detalle de respuestas individuales
+- [x] 🤖 Frontend: columna `#`, botón chevron expandible, mini-tabla de respuestas
+
+---
 
 ### Fase 5c — Borrado de sesiones en MediDo ✅
 

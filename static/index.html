@@ -575,6 +575,7 @@
                     <table class="hogar-tabla">
                         <thead>
                             <tr>
+                                <th>#</th>
                                 <th>Fecha/Hora</th>
                                 <th>Proyecto</th>
                                 <th>Input Tok</th>
@@ -585,7 +586,7 @@
                             </tr>
                         </thead>
                         <tbody id="tablaSesionesClaudeAPI">
-                            <tr><td colspan="7" class="medido-sin-datos">Cargando...</td></tr>
+                            <tr><td colspan="8" class="medido-sin-datos">Cargando...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -1027,16 +1028,27 @@
             var sesiones = data.sesiones || [];
 
             if (sesiones.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="medido-sin-datos">Sin sesiones en este período</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" class="medido-sin-datos">Sin sesiones en este período</td></tr>';
             } else {
                 tbody.innerHTML = sesiones.map(function(s) {
                     var fecha = new Date(s.fecha_fin);
                     var fechaStr = fecha.toLocaleDateString('es-ES');
                     var horaStr = fecha.toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'});
-
                     var cacheTok = s.cache_read_tokens + s.cache_creation_tokens;
+                    var sid = s.session_id;
 
-                    return '<tr>' +
+                    var celdaNum = s.num_respuestas > 1
+                        ? '<td style="white-space:nowrap">' +
+                              '<button class="hogar-boton" id="btn-expand-' + sid + '" ' +
+                                  'onclick="expandirSesion(\'' + sid + '\')" ' +
+                                  'style="padding:2px 6px; margin-right:4px;" title="Ver respuestas">' +
+                                  '<span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle">expand_more</span>' +
+                              '</button>' + s.num_respuestas +
+                          '</td>'
+                        : '<td>' + s.num_respuestas + '</td>';
+
+                    return '<tr id="fila-' + sid + '">' +
+                        celdaNum +
                         '<td>' + fechaStr + ' ' + horaStr + '</td>' +
                         '<td>' + s.proyecto + '</td>' +
                         '<td>' + s.input_tokens.toLocaleString() + '</td>' +
@@ -1044,9 +1056,12 @@
                         '<td>' + cacheTok.toLocaleString() + '</td>' +
                         '<td>$' + s.coste_total_usd.toFixed(4) + '</td>' +
                         '<td><button class="hogar-boton hogar-boton--peligro" style="padding: 4px 8px;" ' +
-                            'onclick="eliminarSesionClaude(\'' + s.session_id + '\')" title="Eliminar sesión">' +
+                            'onclick="eliminarSesionClaude(\'' + sid + '\')" title="Eliminar sesión">' +
                             '<span class="material-symbols-outlined">delete</span>' +
                         '</button></td>' +
+                    '</tr>' +
+                    '<tr class="oculto" id="detalle-' + sid + '">' +
+                        '<td colspan="8" style="padding: 0 8px 8px 32px; background: var(--surface-container-lowest);"></td>' +
                     '</tr>';
                 }).join('');
             }
@@ -1062,7 +1077,53 @@
         .catch(function(err) {
             console.error('Error cargando sesiones Claude:', err);
             document.getElementById('tablaSesionesClaudeAPI').innerHTML =
-                '<tr><td colspan="6" class="medido-sin-datos">Error cargando datos</td></tr>';
+                '<tr><td colspan="8" class="medido-sin-datos">Error cargando datos</td></tr>';
+        });
+    }
+
+    function expandirSesion(sessionId) {
+        var filaDetalle = document.getElementById('detalle-' + sessionId);
+        var btn = document.getElementById('btn-expand-' + sessionId);
+        var icono = btn ? btn.querySelector('.material-symbols-outlined') : null;
+
+        // Si ya tiene contenido, solo alternar visibilidad
+        var celda = filaDetalle.querySelector('td');
+        if (celda && celda.querySelector('table')) {
+            filaDetalle.classList.toggle('oculto');
+            if (icono) icono.textContent = filaDetalle.classList.contains('oculto') ? 'expand_more' : 'expand_less';
+            return;
+        }
+
+        // Primera vez: cargar desde API y renderizar
+        fetch(API + '/claude/sesiones/' + encodeURIComponent(sessionId))
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            var filas = data.respuestas.map(function(r, i) {
+                var hora = new Date(r.fecha_fin).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit', second: '2-digit'});
+                var cache = r.cache_read_tokens + r.cache_creation_tokens;
+                return '<tr>' +
+                    '<td>' + (i + 1) + '</td>' +
+                    '<td>' + hora + '</td>' +
+                    '<td>' + r.input_tokens.toLocaleString() + '</td>' +
+                    '<td>' + r.output_tokens.toLocaleString() + '</td>' +
+                    '<td>' + cache.toLocaleString() + '</td>' +
+                    '<td>$' + r.coste_total_usd.toFixed(4) + '</td>' +
+                '</tr>';
+            }).join('');
+
+            celda.innerHTML =
+                '<table class="hogar-tabla" style="font-size:0.85em; margin: 4px 0;">' +
+                    '<thead><tr>' +
+                        '<th>#</th><th>Hora</th><th>Input Tok</th><th>Output Tok</th><th>Cache Tok</th><th>Coste USD</th>' +
+                    '</tr></thead>' +
+                    '<tbody>' + filas + '</tbody>' +
+                '</table>';
+
+            filaDetalle.classList.remove('oculto');
+            if (icono) icono.textContent = 'expand_less';
+        })
+        .catch(function(err) {
+            console.error('Error cargando detalle de sesión:', err);
         });
     }
 

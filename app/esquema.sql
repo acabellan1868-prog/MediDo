@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS alertas (
 CREATE TABLE IF NOT EXISTS tracking_claude (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     -- Datos del hook de Claude Code
-    session_id TEXT NOT NULL UNIQUE,
+    session_id TEXT NOT NULL,
     fecha_fin TEXT NOT NULL,                    -- ISO 8601 con timezone (del hook)
     directorio TEXT,                            -- C:\Users\... (opcional)
     proyecto TEXT NOT NULL,                     -- Identificador del proyecto

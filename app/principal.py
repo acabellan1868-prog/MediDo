@@ -12,7 +12,7 @@ from fastapi.staticfiles import StaticFiles
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 
-from app.bd import inicializar_bd
+from app.bd import inicializar_bd, migrar_bd
 from app.config import RUTA_BD, INTERVALO_HEALTH, INTERVALO_METRICAS
 from app.recolector_proxmox import recolectar_proxmox
 from app.recolector_docker import recolectar_docker
@@ -59,6 +59,7 @@ async def ciclo_vida(app: FastAPI):
     if directorio_bd:
         os.makedirs(directorio_bd, exist_ok=True)
 
+    migrar_bd()
     inicializar_bd()
 
     # Recoleccion de metricas (Proxmox + Docker) cada INTERVALO_METRICAS

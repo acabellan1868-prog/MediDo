@@ -101,8 +101,8 @@ class EventoClaudeCode(BaseModel):
 @ruta.post("/sesion")
 def registrar_sesion(evento: EventoClaudeCode):
     """
-    Recibe un evento de sesion de Claude Code y lo guarda en BD.
-    Idempotente: si session_id existe, responde OK sin duplicar.
+    Recibe un evento de respuesta de Claude Code y lo guarda en BD.
+    Cada respuesta de una sesión genera una fila independiente (sin UNIQUE en session_id).
     """
     sql = """
         INSERT INTO tracking_claude (
@@ -127,22 +127,8 @@ def registrar_sesion(evento: EventoClaudeCode):
 
     try:
         bd.ejecutar(sql, parametros)
-        logger.info(f"Sesion registrada: {evento.session_id} ({evento.proyecto})")
-        return {
-            "ok": True,
-            "session_id": evento.session_id,
-            "duplicada": False,
-        }
-    except sqlite3.IntegrityError as e:
-        if "UNIQUE constraint failed: tracking_claude.session_id" in str(e):
-            logger.warning(f"Sesion duplicada (reintento): {evento.session_id}")
-            return {
-                "ok": True,
-                "session_id": evento.session_id,
-                "duplicada": True,
-            }
-        logger.error(f"Error BD en sesion {evento.session_id}: {e}")
-        raise HTTPException(500, "Error al guardar la sesion")
+        logger.info(f"Respuesta registrada: {evento.session_id} ({evento.proyecto})")
+        return {"ok": True, "session_id": evento.session_id}
     except Exception as e:
         logger.error(f"Error inesperado en registrar_sesion: {e}")
         raise HTTPException(500, "Error interno del servidor")
@@ -360,7 +346,7 @@ def resumen(
 
 @ruta.delete("/sesiones/{session_id}")
 def eliminar_sesion(session_id: str):
-    """Elimina una sesión individual de la BD por su session_id."""
+    """Elimina todas las respuestas de una sesión de la BD por su session_id."""
     resultado = bd.consultar_uno(
         "SELECT session_id FROM tracking_claude WHERE session_id = ?", (session_id,)
     )
@@ -378,7 +364,9 @@ def listar_sesiones(
     limite: int = 1000,
 ):
     """
-    Lista sesiones individuales de Claude Code con filtros opcionales.
+    Lista sesiones de Claude Code agrupadas por session_id, con filtros opcionales.
+    Cada sesión muestra los tokens/coste del acumulado máximo (última respuesta)
+    y el número de respuestas registradas.
 
     Query params:
     - periodo: 'dia' (24h), 'semana' (7 dias), 'mes' (defecto)
@@ -386,19 +374,15 @@ def listar_sesiones(
     - limite: máximo de sesiones a devolver (defecto: 1000, máximo: 10000)
 
     Responde con:
-    - sesiones: lista de sesiones con tokens y coste
-    - totales: agregaciones (count, tokens, coste) para sesiones filtradas
+    - sesiones: una fila por session_id con totales y num_respuestas
+    - totales: sesiones únicas, tokens totales y coste total del período
     - rango: fechas desde/hasta del período seleccionado
-    - proyectos_unicos: lista de todos los proyectos disponibles en el período
+    - proyectos_unicos: lista de proyectos para el dropdown
     """
 
-    # Validar límite
     limite = min(limite, 10000)
-
-    # Parsear fecha_hasta (ahora)
     fecha_fin = datetime.now()
 
-    # Calcular rango de fechas según el período
     if periodo == "dia":
         fecha_inicio = fecha_fin - timedelta(days=1)
         fecha_inicio = fecha_inicio.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -406,7 +390,6 @@ def listar_sesiones(
         fecha_inicio = fecha_fin - timedelta(days=7)
         fecha_inicio = fecha_inicio.replace(hour=0, minute=0, second=0, microsecond=0)
     elif periodo == "mes":
-        # Logica de reseteo mensual (igual que en resumen())
         if CLAUDE_DIA_RESETEO:
             hoy = fecha_fin.date()
             if hoy.day >= CLAUDE_DIA_RESETEO:
@@ -421,48 +404,55 @@ def listar_sesiones(
     else:
         raise HTTPException(400, f"periodo invalido: {periodo}")
 
-    # Fechas ISO para consultas
     fecha_fin_str = fecha_fin.replace(hour=23, minute=59, second=59, microsecond=999999).isoformat()
     fecha_inicio_str = fecha_inicio.replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
 
-    # Construir WHERE dinámicamente
     where = ["datetime(fecha_fin) BETWEEN ? AND ?"]
     parametros = [fecha_inicio_str, fecha_fin_str]
-
     if proyecto:
         where.append("proyecto = ?")
         parametros.append(proyecto)
-
     where_clause = " WHERE " + " AND ".join(where)
 
-    # Consultar sesiones ordenadas por fecha descendente
+    # Una fila por sesión: máximos acumulados + conteo de respuestas
     sql_sesiones = f"""
         SELECT
-            session_id, fecha_fin, proyecto,
-            input_tokens, output_tokens, cache_read_tokens, cache_creation_tokens,
-            coste_input_usd, coste_output_usd, coste_cache_usd,
-            coste_input_usd + coste_output_usd + coste_cache_usd as coste_total
+            session_id,
+            MAX(fecha_fin) as fecha_fin,
+            proyecto,
+            MAX(input_tokens) as input_tokens,
+            MAX(output_tokens) as output_tokens,
+            MAX(cache_read_tokens) as cache_read_tokens,
+            MAX(cache_creation_tokens) as cache_creation_tokens,
+            MAX(coste_input_usd + coste_output_usd + coste_cache_usd) as coste_total,
+            COUNT(*) as num_respuestas
         FROM tracking_claude
         {where_clause}
-        ORDER BY fecha_fin DESC
+        GROUP BY session_id
+        ORDER BY MAX(fecha_fin) DESC
         LIMIT ?
     """
-    parametros_sesiones = parametros + [limite]
-    sesiones_raw = bd.consultar_todos(sql_sesiones, tuple(parametros_sesiones))
+    sesiones_raw = bd.consultar_todos(sql_sesiones, tuple(parametros + [limite]))
 
-    # Consultar agregaciones
+    # Totales calculados sobre los máximos por sesión (evita sumar acumulados parciales)
     sql_agg = f"""
         SELECT
-            COUNT(*) as sesiones_count,
-            COALESCE(SUM(input_tokens + output_tokens + cache_read_tokens + cache_creation_tokens), 0) as tokens_total,
-            COALESCE(SUM(coste_input_usd + coste_output_usd + coste_cache_usd), 0) as coste_total
-        FROM tracking_claude
-        {where_clause}
+            COUNT(DISTINCT session_id) as sesiones_count,
+            COALESCE(SUM(max_tokens), 0) as tokens_total,
+            COALESCE(SUM(max_coste), 0) as coste_total
+        FROM (
+            SELECT
+                session_id,
+                MAX(input_tokens + output_tokens + cache_read_tokens + cache_creation_tokens) as max_tokens,
+                MAX(coste_input_usd + coste_output_usd + coste_cache_usd) as max_coste
+            FROM tracking_claude
+            {where_clause}
+            GROUP BY session_id
+        )
     """
     agg = bd.consultar_uno(sql_agg, tuple(parametros))
 
-    # Consultar proyectos únicos disponibles en el período (sin filtro de proyecto)
-    sql_proyectos = f"""
+    sql_proyectos = """
         SELECT DISTINCT proyecto
         FROM tracking_claude
         WHERE datetime(fecha_fin) BETWEEN ? AND ?
@@ -471,7 +461,6 @@ def listar_sesiones(
     proyectos_raw = bd.consultar_todos(sql_proyectos, (fecha_inicio_str, fecha_fin_str))
     proyectos_unicos = [p["proyecto"] for p in proyectos_raw]
 
-    # Formatear sesiones: agregar coste_total_usd calculado
     sesiones = []
     for s in sesiones_raw:
         sesiones.append({
@@ -483,6 +472,7 @@ def listar_sesiones(
             "cache_read_tokens": s["cache_read_tokens"],
             "cache_creation_tokens": s["cache_creation_tokens"],
             "coste_total_usd": round(s["coste_total"], 5),
+            "num_respuestas": s["num_respuestas"],
         })
 
     return {
@@ -497,4 +487,40 @@ def listar_sesiones(
             "fecha_hasta": fecha_fin_str,
         },
         "proyectos_unicos": proyectos_unicos,
+    }
+
+
+@ruta.get("/sesiones/{session_id}")
+def detalle_sesion(session_id: str):
+    """
+    Devuelve todas las respuestas individuales de una sesión, ordenadas cronológicamente.
+    Usado para el desglose expandible en la tabla de sesiones.
+    """
+    respuestas_raw = bd.consultar_todos(
+        """
+        SELECT fecha_fin, input_tokens, output_tokens,
+               cache_read_tokens, cache_creation_tokens,
+               coste_input_usd + coste_output_usd + coste_cache_usd as coste_total
+        FROM tracking_claude
+        WHERE session_id = ?
+        ORDER BY fecha_fin ASC
+        """,
+        (session_id,),
+    )
+    if not respuestas_raw:
+        raise HTTPException(404, f"Sesión no encontrada: {session_id}")
+
+    return {
+        "session_id": session_id,
+        "respuestas": [
+            {
+                "fecha_fin": r["fecha_fin"],
+                "input_tokens": r["input_tokens"],
+                "output_tokens": r["output_tokens"],
+                "cache_read_tokens": r["cache_read_tokens"],
+                "cache_creation_tokens": r["cache_creation_tokens"],
+                "coste_total_usd": round(r["coste_total"], 5),
+            }
+            for r in respuestas_raw
+        ],
     }

@@ -2,6 +2,37 @@
 
 ## 2026-04-03
 
+### Fase 5d — Desglose de respuestas por sesión
+
+El hook Stop se dispara en cada respuesta de Claude, no al cerrar la sesión. Cada disparo
+genera tokens acumulativos. Ahora se guarda cada respuesta como fila independiente,
+y la tabla agrupa por sesión con opción de expandir el desglose.
+
+**Cambios en BD:**
+- `app/esquema.sql`: eliminado `UNIQUE` de `session_id` en `tracking_claude`
+- `app/bd.py`: nueva función `migrar_bd()` que detecta la constraint UNIQUE y recrea
+  la tabla sin ella (rename → create → copy → drop), compatible con BD en producción
+
+**Cambios en backend (`app/rutas/claude.py`):**
+- `POST /sesion`: eliminado manejo de `IntegrityError` por UNIQUE — inserta siempre
+- `GET /sesiones`: ahora agrupa por `session_id` con `MAX()` para tokens/coste
+  (las entradas son acumulativas, el MAX da el total real) y `COUNT(*)` como `num_respuestas`
+  Los totales del panel usan una subquery para evitar sumar acumulados parciales
+- `GET /sesiones/{session_id}`: nuevo endpoint — devuelve todas las respuestas individuales
+  de una sesión ordenadas cronológicamente (para el desglose expandible)
+- `DELETE /sesiones/{session_id}`: ya borraba por session_id, ahora elimina todas las filas
+
+**Cambios en frontend (`static/index.html`):**
+- Columna `#` al inicio de la tabla con el número de respuestas
+- Si `num_respuestas > 1`: botón chevron `▶` que llama a `expandirSesion()`
+- `expandirSesion()`: fetch a `/api/claude/sesiones/{id}`, renderiza mini-tabla con
+  desglose por respuesta (hora, input, output, cache, coste), toggle expand/collapse
+
+**Arquitectura:**
+- `app/principal.py`: llama `migrar_bd()` antes de `inicializar_bd()` en el arranque
+
+---
+
 ### Fase 5c — Borrado de sesiones individuales en MediDo
 
 Añadida gestión de sesiones en la pestaña Claude Code para poder limpiar datos

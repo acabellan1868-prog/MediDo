@@ -18,6 +18,48 @@ def obtener_conexion() -> sqlite3.Connection:
     return conexion
 
 
+def migrar_bd():
+    """Aplica migraciones de esquema sobre una BD ya existente.
+
+    Migración 1: eliminar UNIQUE de session_id en tracking_claude para permitir
+    múltiples entradas por sesión (una por respuesta de Claude Code).
+    """
+    conexion = obtener_conexion()
+    fila = conexion.execute(
+        "SELECT sql FROM sqlite_master WHERE type='table' AND name='tracking_claude'"
+    ).fetchone()
+    if fila and "UNIQUE" in fila[0]:
+        conexion.executescript("""
+            CREATE TABLE tracking_claude_new (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                session_id TEXT NOT NULL,
+                fecha_fin TEXT NOT NULL,
+                directorio TEXT,
+                proyecto TEXT NOT NULL,
+                input_tokens INTEGER NOT NULL DEFAULT 0,
+                output_tokens INTEGER NOT NULL DEFAULT 0,
+                cache_read_tokens INTEGER NOT NULL DEFAULT 0,
+                cache_creation_tokens INTEGER NOT NULL DEFAULT 0,
+                coste_input_usd REAL NOT NULL DEFAULT 0.0,
+                coste_output_usd REAL NOT NULL DEFAULT 0.0,
+                coste_cache_usd REAL NOT NULL DEFAULT 0.0,
+                fecha_registro TEXT NOT NULL DEFAULT (datetime('now')),
+                sincronizado INTEGER NOT NULL DEFAULT 0,
+                CHECK(input_tokens >= 0),
+                CHECK(output_tokens >= 0),
+                CHECK(cache_read_tokens >= 0),
+                CHECK(cache_creation_tokens >= 0),
+                CHECK(coste_input_usd >= 0),
+                CHECK(coste_output_usd >= 0),
+                CHECK(coste_cache_usd >= 0)
+            );
+            INSERT INTO tracking_claude_new SELECT * FROM tracking_claude;
+            DROP TABLE tracking_claude;
+            ALTER TABLE tracking_claude_new RENAME TO tracking_claude;
+        """)
+    conexion.close()
+
+
 def inicializar_bd():
     """Crea las tablas si no existen ejecutando esquema.sql."""
     ruta_esquema = Path(__file__).parent / "esquema.sql"
