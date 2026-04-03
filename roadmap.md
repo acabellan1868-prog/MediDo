@@ -4,12 +4,12 @@
 
 **Fecha:** 2026-04-03
 
-Fase 5b (Pestaña CLAUDE Code) implementada y pusheada a GitHub.
-Endpoint GET /api/claude/sesiones completo (filtros por período y proyecto).
-Frontend: nueva pestaña con tabla de sesiones, filtros dinámicos, sumas.
+Fase 5b completada. Pestaña CLAUDE Code en MediDo funcionando.
+Bug corregido: el hook `claude-tracker.py` leía tokens del nivel raíz del JSONL en vez
+de `message.usage` — tokens siempre salían a 0. Fix aplicado y cola limpiada.
 
-**Status:** Esperando testing en VM 101 (bash actualizar.sh en progreso).
-**Próximo:** Marcar Fase 5b como ✅ tras verificación en portal.
+**Status:** Sistema de tracking de Claude Code operativo end-to-end.
+**Próximo:** Verificar en portal que la próxima sesión registra tokens reales.
 
 ---
 
@@ -82,19 +82,20 @@ El hook de Claude Code (Fase 13a) POST a estos endpoints.
   - [x] GET `/api/claude/resumen` — agrega por período (día/semana/mes) con presupuesto y limites
 - [x] 👤 Tarjeta en portal mostrando: sesiones, tokens, coste, presupuesto, limites 5h/semana
 
-### Fase 5b — Pestaña CLAUDE Code en MediDo 🔄
+### Fase 5b — Pestaña CLAUDE Code en MediDo ✅
 
 Tabla detallada de sesiones individuales con filtros por período y proyecto.
 Permite detectar sesiones que se "fueron de madre" en gastos o tokens.
 
-- [ ] 🤖 Endpoint `GET /api/claude/sesiones` con query params: `periodo`, `proyecto`, `limite`
+- [x] 🤖 Endpoint `GET /api/claude/sesiones` con query params: `periodo`, `proyecto`, `limite`
   - Devuelve: sesiones, totales (count, tokens, coste), lista de proyectos únicos
-- [ ] 🤖 Nueva pestaña "Claude Code" en `static/index.html`
+- [x] 🤖 Nueva pestaña "Claude Code" en `static/index.html`
   - Filtros: período (Hoy/Esta semana/Este mes), proyecto (dropdown dinámico)
   - Tabla: Fecha/Hora | Proyecto | Input Tok | Output Tok | Cache Tok | Coste USD
   - Sumas: Sesiones | Tokens Total | Coste Total USD
-- [ ] 🤖 Funciones JavaScript: `cargarSesionesClaudeAPI()`, `cargarProyectosClaude()`
-- [ ] 👤 Desplegar en VM 101 y verificar
+- [x] 🤖 Funciones JavaScript: `cargarSesionesClaudeAPI()`, `cargarProyectosClaude()`
+- [x] 🤖 Fix bug tokens a 0 en `claude-tracker.py` (`message.usage` en vez de `usage`)
+- [x] 👤 Desplegar en VM 101 y verificar
 
 ---
 

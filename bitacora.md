@@ -2,6 +2,32 @@
 
 ## 2026-04-03
 
+### Bug — Hook tracker: tokens siempre a 0
+
+**Síntoma:** Todas las sesiones registradas tenían `input_tokens`, `output_tokens` y `cache_*_tokens` a 0.
+La cola local `cola_sync.jsonl` acumulaba entradas con coste 0.
+
+**Causa raíz:** El script `~/.claude/claude-tracker.py` buscaba el campo `usage` en el nivel raíz
+del evento JSONL de la transcripción. La estructura real es:
+
+```json
+{ "type": "assistant", "message": { "usage": { "input_tokens": ..., ... } } }
+```
+
+El uso está en `evento["message"]["usage"]`, no en `evento["usage"]`.
+
+**Fix:** Una línea en `leer_tokens_de_transcripcion()`:
+```python
+# Antes
+uso = evento.get("usage", {})
+# Después
+uso = evento.get("message", {}).get("usage", {})
+```
+
+**Limpieza:** Se vació `cola_sync.jsonl` (7 entradas con tokens a 0 que habrían contaminado la BD).
+
+---
+
 ### Fase 5b — Pestaña "CLAUDE Code" en MediDo
 
 Se implementa pestaña con historial detallado de sesiones individuales de Claude Code,
