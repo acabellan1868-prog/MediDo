@@ -2,14 +2,10 @@
 
 ## Estado actual
 
-**Fecha:** 2026-04-03
+**Fecha:** 2026-04-04
 
-Fase 5b completada. Pestaña CLAUDE Code en MediDo funcionando.
-Bug corregido: el hook `claude-tracker.py` leía tokens del nivel raíz del JSONL en vez
-de `message.usage` — tokens siempre salían a 0. Fix aplicado y cola limpiada.
-
-**Status:** Fase 5d implementada. Sesiones con desglose expandible por respuesta, migración automática de BD en producción.
-**Próximo:** Desplegar en VM 101 (`bash actualizar.sh`) y verificar migración + tabla expandible.
+**Status:** Fase 5d en producción. Mejoras menores de UI: tab renombrado a CLAUDE, bug de colapso de sesiones corregido.
+**Próximo:** Pendiente de nuevas funcionalidades o bugs reportados.
 
 ---
 

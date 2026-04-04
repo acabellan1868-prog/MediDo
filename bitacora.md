@@ -1,5 +1,15 @@
 # Bitácora — MediDo
 
+## 2026-04-04
+
+### Mejoras menores de UI
+
+- Etiqueta del tab "Claude Code" renombrada a "CLAUDE" (sin icono)
+- Corregido bug en `expandirSesion()`: el colapso de una sesión desplegada no funcionaba.
+  La lógica original usaba `toggle` condicionalmente, lo que podía no detectar correctamente
+  el estado. Reescrita con comprobación explícita: si la fila está visible → colapsar,
+  si está oculta con tabla cargada → expandir sin fetch, si está oculta sin datos → fetch.
+
 ## 2026-04-03
 
 ### Fase 5d — Desglose de respuestas por sesión
