@@ -1058,7 +1058,7 @@
                             '<span class="material-symbols-outlined">delete</span>' +
                         '</button></td>' +
                     '</tr>' +
-                    '<tr class="oculto" id="detalle-' + sid + '">' +
+                    '<tr style="display:none" id="detalle-' + sid + '">' +
                         '<td colspan="8" style="padding: 0 8px 8px 32px; background: var(--surface-container-lowest);"></td>' +
                     '</tr>';
                 }).join('');
@@ -1085,8 +1085,8 @@
         var icono = btn ? btn.querySelector('.material-symbols-outlined') : null;
 
         // Si ya está expandido, colapsar
-        if (!filaDetalle.classList.contains('oculto')) {
-            filaDetalle.classList.add('oculto');
+        if (filaDetalle.style.display !== 'none') {
+            filaDetalle.style.display = 'none';
             if (icono) icono.textContent = 'expand_more';
             return;
         }
@@ -1094,7 +1094,7 @@
         // Si ya tiene contenido cargado, solo mostrar
         var celda = filaDetalle.querySelector('td');
         if (celda && celda.querySelector('table')) {
-            filaDetalle.classList.remove('oculto');
+            filaDetalle.style.display = '';
             if (icono) icono.textContent = 'expand_less';
             return;
         }
@@ -1124,7 +1124,7 @@
                     '<tbody>' + filas + '</tbody>' +
                 '</table>';
 
-            filaDetalle.classList.remove('oculto');
+            filaDetalle.style.display = '';
             if (icono) icono.textContent = 'expand_less';
         })
         .catch(function(err) {
