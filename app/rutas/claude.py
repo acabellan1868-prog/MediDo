@@ -196,25 +196,37 @@ def resumen(
         fecha_inicio.replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
     )
 
-    # Consultar agregaciones
+    # Consultar agregaciones — agrupando por sesión para evitar sumar acumulados parciales
     sql_agregacion = """
         SELECT
             COUNT(*) as total,
-            COALESCE(SUM(input_tokens), 0) as input_total,
-            COALESCE(SUM(output_tokens), 0) as output_total,
-            COALESCE(SUM(cache_read_tokens), 0) as cache_read_total,
-            COALESCE(SUM(cache_creation_tokens), 0) as cache_creation_total,
-            COALESCE(SUM(coste_input_usd), 0.0) as coste_input,
-            COALESCE(SUM(coste_output_usd), 0.0) as coste_output,
-            COALESCE(SUM(coste_cache_usd), 0.0) as coste_cache,
+            COALESCE(SUM(max_input), 0) as input_total,
+            COALESCE(SUM(max_output), 0) as output_total,
+            COALESCE(SUM(max_cache_read), 0) as cache_read_total,
+            COALESCE(SUM(max_cache_creation), 0) as cache_creation_total,
+            COALESCE(SUM(max_coste_input), 0.0) as coste_input,
+            COALESCE(SUM(max_coste_output), 0.0) as coste_output,
+            COALESCE(SUM(max_coste_cache), 0.0) as coste_cache,
             CASE WHEN COUNT(*) > 0 THEN
                 ROUND(
-                    (SUM(input_tokens) + SUM(output_tokens) +
-                     SUM(cache_read_tokens) + SUM(cache_creation_tokens)) / COUNT(*), 0
+                    (SUM(max_input) + SUM(max_output) +
+                     SUM(max_cache_read) + SUM(max_cache_creation)) / COUNT(*), 0
                 )
             ELSE 0 END as tokens_promedio
-        FROM tracking_claude
-        WHERE datetime(fecha_fin) BETWEEN ? AND ?
+        FROM (
+            SELECT
+                session_id,
+                MAX(input_tokens) as max_input,
+                MAX(output_tokens) as max_output,
+                MAX(cache_read_tokens) as max_cache_read,
+                MAX(cache_creation_tokens) as max_cache_creation,
+                MAX(coste_input_usd) as max_coste_input,
+                MAX(coste_output_usd) as max_coste_output,
+                MAX(coste_cache_usd) as max_coste_cache
+            FROM tracking_claude
+            WHERE datetime(fecha_fin) BETWEEN ? AND ?
+            GROUP BY session_id
+        )
     """
 
     resultado_agg = bd.consultar_uno(sql_agregacion, (fecha_inicio_str, fecha_fin_str))
