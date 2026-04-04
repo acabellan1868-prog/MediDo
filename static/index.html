@@ -449,9 +449,7 @@
             <button class="medido-tab" data-tab="servicios" onclick="cambiarTab('servicios')">Servicios</button>
             <button class="medido-tab" data-tab="historial" onclick="cambiarTab('historial')">Historial</button>
             <button class="medido-tab" data-tab="alertas" onclick="cambiarTab('alertas')">Alertas</button>
-            <button class="medido-tab" data-tab="claude" onclick="cambiarTab('claude')">
-                <span class="material-symbols-outlined">code</span> Claude Code
-            </button>
+            <button class="medido-tab" data-tab="claude" onclick="cambiarTab('claude')">CLAUDE</button>
         </div>
 
         <!-- ═══ PANEL: General ═══ -->
@@ -1086,11 +1084,18 @@
         var btn = document.getElementById('btn-expand-' + sessionId);
         var icono = btn ? btn.querySelector('.material-symbols-outlined') : null;
 
-        // Si ya tiene contenido, solo alternar visibilidad
+        // Si ya está expandido, colapsar
+        if (!filaDetalle.classList.contains('oculto')) {
+            filaDetalle.classList.add('oculto');
+            if (icono) icono.textContent = 'expand_more';
+            return;
+        }
+
+        // Si ya tiene contenido cargado, solo mostrar
         var celda = filaDetalle.querySelector('td');
         if (celda && celda.querySelector('table')) {
-            filaDetalle.classList.toggle('oculto');
-            if (icono) icono.textContent = filaDetalle.classList.contains('oculto') ? 'expand_more' : 'expand_less';
+            filaDetalle.classList.remove('oculto');
+            if (icono) icono.textContent = 'expand_less';
             return;
         }
 
