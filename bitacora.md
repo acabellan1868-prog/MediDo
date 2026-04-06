@@ -1,5 +1,17 @@
 # Bitácora — MediDo
 
+## 2026-04-07
+
+### Variables sensibles a .env — añadido .env.example
+
+- Añadido `.env.example` como plantilla pública con todos los nombres de variables
+  que necesita MediDo (`PVE_*`, `HA_TOKEN`, `NTFY_TOPIC`) sin valores reales
+- MediDo no tiene `docker-compose.yml` propio (se orquesta desde hogarOS)
+
+Ver convención completa en hogarOS/CLAUDE.md.
+
+---
+
 ## 2026-04-04
 
 ### Mejoras menores de UI

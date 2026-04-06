@@ -76,7 +76,7 @@ MediDo/
 | `PVE_TOKEN_ID` | Token API (`root@pam!medido`) |
 | `PVE_TOKEN_SECRET` | Secret del token |
 | `PVE_VERIFY_SSL` | Verificar SSL (defecto `false`) |
-| `NTFY_TOPIC` | Topic NTFY (`hogaros-3ca6f61b`) |
+| `NTFY_TOPIC` | Topic NTFY (intermediario de transporte) para alertas. Valor en `.env`, nunca hardcoded. |
 | `MEDIDO_INTERVALO_HEALTH` | Intervalo health checks en segundos (defecto 60) |
 | `MEDIDO_INTERVALO_METRICAS` | Intervalo métricas en segundos (defecto 300) |
 | `MEDIDO_DIAS_RETENCION` | Días de historial (defecto 90) |
