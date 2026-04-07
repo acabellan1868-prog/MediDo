@@ -119,11 +119,11 @@ Permite detectar sesiones que se "fueron de madre" en gastos o tokens.
 
 ## Pendiente / Mejoras futuras
 
-### Fase 6 — Tarjeta en el portal
+### Fase 6 — Tarjeta en el portal ✅
 
-- [ ] Tarjeta "Salud del sistema" en el grid bento del portal
-- [ ] Consume `/salud/api/resumen`
-- [ ] Muestra semaforo + CPU/RAM/disco + contenedores + servicios
+- [x] Tarjeta "Salud del sistema" en el grid bento del portal
+- [x] Consume `/salud/api/resumen`
+- [x] Muestra semaforo + CPU/RAM/disco + contenedores + servicios
 
 ### Fase 7 — Mejoras de metricas
 

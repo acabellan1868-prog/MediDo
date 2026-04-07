@@ -179,6 +179,15 @@ Claude Code Hook (Windows)
 
 ---
 
+## 2026-03-28
+
+### Tarjeta en el portal hogarOS (Fase 5)
+
+Implementada la tarjeta "Salud del Sistema" en `portal/index.html` de hogarOS.
+Consume `/salud/api/resumen`. Completa la Fase 5 del roadmap de MediDo.
+
+---
+
 ## 2026-03-27
 
 ### Despliegue inicial
