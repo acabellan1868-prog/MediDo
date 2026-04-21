@@ -45,7 +45,7 @@ SERVICIOS = [
     },
     {
         "nombre": "kryptonite",
-        "url": "http://host.docker.internal:5000/portafolio",
+        "url": "http://kryptonite:5000/portafolio",
         "esperado": [200],
     },
     {
