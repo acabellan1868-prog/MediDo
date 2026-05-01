@@ -166,6 +166,17 @@ def recolectar_proxmox() -> dict:
     # Guardar snapshot en BD (buscar VM 101 como referencia principal)
     if host:
         vm101 = next((vm for vm in vms if vm["vmid"] == 101), None)
+
+        # El campo 'disk' de la API de Proxmox es un contador de I/O (bytes leídos),
+        # no espacio usado. Se usa el storage principal del nodo para el % real de disco.
+        storage_principal = next(
+            (s for s in almacenamiento if s["nombre"] == "local-lvm"),
+            almacenamiento[0] if almacenamiento else None,
+        )
+        disco_percent = storage_principal["percent"] if storage_principal else None
+        disco_usado_gb = storage_principal["usado_gb"] if storage_principal else None
+        disco_total_gb = storage_principal["total_gb"] if storage_principal else None
+
         bd.ejecutar(
             """INSERT INTO metricas (
                 pve_cpu_percent, pve_memoria_percent,
@@ -185,9 +196,9 @@ def recolectar_proxmox() -> dict:
                 vm101["memoria"]["percent"] if vm101 else None,
                 vm101["memoria"]["usado_gb"] if vm101 else None,
                 vm101["memoria"]["total_gb"] if vm101 else None,
-                vm101["disco"]["percent"] if vm101 else None,
-                vm101["disco"]["usado_gb"] if vm101 else None,
-                vm101["disco"]["total_gb"] if vm101 else None,
+                disco_percent,
+                disco_usado_gb,
+                disco_total_gb,
                 vm101["uptime_dias"] if vm101 else None,
             ),
         )

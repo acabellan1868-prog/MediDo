@@ -1,5 +1,31 @@
 # Bitácora — MediDo
 
+## 2026-04-30
+
+### Corrección: disco siempre mostraba 0%
+
+El campo `disk` de la API `/nodes/{node}/qemu` de Proxmox es un contador de I/O
+(bytes leídos acumulados), no espacio usado en disco. Al dividirlo entre `maxdisk`
+(tamaño total) el resultado era siempre ~0%.
+
+Corregido en `recolector_proxmox.py`: ahora `vm_disco_percent`, `vm_disco_usado_gb`
+y `vm_disco_total_gb` se obtienen del storage `local-lvm` vía `obtener_almacenamiento()`,
+que sí devuelve el espacio real ocupado. Si no existe `local-lvm`, usa el primer
+storage disponible como fallback.
+
+## 2026-04-25
+
+### AGENTS.md local para Codex
+
+Creado `AGENTS.md` en el repo de MediDo a partir de `CLAUDE.md`, con estructura,
+health checks, API, variables de entorno y contexto de `hogar.css`.
+
+Corregido el matiz del endpoint `POST /api/claude/sesion`: ya no debe asumirse
+idempotencia por `session_id`, porque se quitó el `UNIQUE` para guardar respuestas
+individuales dentro de una misma sesión.
+
+---
+
 ## 2026-04-07
 
 ### Variables sensibles a .env — añadido .env.example
