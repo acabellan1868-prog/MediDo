@@ -273,21 +273,32 @@ def resumen(
     }
 
     # Agregar limites de tokens (últimas 5h y semana)
+    # Se deduplica por sesión usando MAX() para evitar sumar filas acumuladas parciales.
     hace_5h = fecha_fin - timedelta(hours=5)
     hace_7d = fecha_fin - timedelta(days=7)
 
     sql_5h = """
-        SELECT COALESCE(SUM(input_tokens + output_tokens + cache_read_tokens + cache_creation_tokens), 0) as tokens_total
-        FROM tracking_claude
-        WHERE datetime(fecha_fin) > ?
+        SELECT COALESCE(SUM(max_tokens), 0) as tokens_total
+        FROM (
+            SELECT session_id,
+                   MAX(input_tokens + output_tokens + cache_read_tokens + cache_creation_tokens) as max_tokens
+            FROM tracking_claude
+            WHERE datetime(fecha_fin) > ?
+            GROUP BY session_id
+        )
     """
     resultado_5h = bd.consultar_uno(sql_5h, (hace_5h.isoformat(),))
     tokens_5h = resultado_5h.get("tokens_total", 0) if resultado_5h else 0
 
     sql_7d = """
-        SELECT COALESCE(SUM(input_tokens + output_tokens + cache_read_tokens + cache_creation_tokens), 0) as tokens_total
-        FROM tracking_claude
-        WHERE datetime(fecha_fin) > ?
+        SELECT COALESCE(SUM(max_tokens), 0) as tokens_total
+        FROM (
+            SELECT session_id,
+                   MAX(input_tokens + output_tokens + cache_read_tokens + cache_creation_tokens) as max_tokens
+            FROM tracking_claude
+            WHERE datetime(fecha_fin) > ?
+            GROUP BY session_id
+        )
     """
     resultado_7d = bd.consultar_uno(sql_7d, (hace_7d.isoformat(),))
     tokens_7d = resultado_7d.get("tokens_total", 0) if resultado_7d else 0

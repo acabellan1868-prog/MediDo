@@ -63,4 +63,11 @@ def resumen():
         "alertas_activas": alertas_activas,
     }
 
+    # Uptime de la VM formateado: "14d 7h"
+    if metrica and metrica.get("vm_uptime_dias") is not None:
+        dias_float = metrica["vm_uptime_dias"]
+        dias = int(dias_float)
+        horas = int((dias_float - dias) * 24)
+        resultado["uptime_host"] = f"{dias}d {horas}h"
+
     return resultado
