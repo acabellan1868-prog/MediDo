@@ -1,5 +1,31 @@
 # Bitácora — MediDo
 
+## 2026-05-05
+
+### Fase 15 Paso 5 — Rediseño Cockpit completo
+
+Reescritura completa de `static/index.html` del estilo Living Sanctuary al estilo Cockpit.
+Sin cambios en la lógica JS ni en los endpoints de API.
+
+**Estructura visual nueva:**
+- Header fijo 48px con `ck-header`, nav inline de 7 pestañas (General / Proxmox / Contenedores / Servicios / Historial / Alertas / Claude) en escritorio, drawer lateral en móvil.
+- Barra `.md-status` con `.status-dot` (ok/warn/danger con glow) — reemplaza el semáforo circular del diseño anterior.
+- Tab General: 4 tarjetas métricas (`.md-tarjeta`) con barras de progreso de 2px (`.md-barra`) y valores numéricos.
+- Tab Proxmox: tarjetas VM (`.md-vm`) con barras CPU/RAM/disco. Contadores de estado.
+- Tab Historial: canvas gráfica 24h preservada; líneas de cuadrícula en `rgba(128,128,128,0.1)` para compatibilidad con ambos temas.
+- Tab Alertas: lista con `border-left: 2px solid var(--ck-warn)`, botones resolver/eliminar.
+- Tab Claude: selector de período, tabla de sesiones con filas expandibles (`.md-expand-btn`), totales en grid (`.md-totales`).
+- Toggle de tema: `data-tema-cockpit` / `localStorage('hogar-cockpit-tema')`.
+
+**JS preservado:** `cargarGeneral`, `cargarProxmox`, `cargarContenedores`, `cargarServicios`, `cargarHistorial`/`dibujarGrafica`, `cargarAlertas`/`resolverAlerta`, `cargarSesionesClaudeAPI`/`expandirSesion`/`eliminarSesionClaude`, `setInterval(60s)`.
+
+**Fix tipografía (commit `dc9d862`):**
+- Añadido `html { font-size: 150% }` — sin este reset `1rem = 16px` en lugar de `24px`, haciendo los textos más pequeños que en hogarOS/FiDo.
+
+**Commits:** `631a3d6` (rediseño), `dc9d862` (fix font-size)
+
+---
+
 ## 2026-04-30
 
 ### Corrección: disco siempre mostraba 0%
