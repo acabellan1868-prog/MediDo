@@ -1,533 +1,465 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-tema-cockpit="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MediDo — Metricas del Hogar</title>
+    <title>MediDo — Métricas del Hogar</title>
     <link rel="stylesheet" href="/static/hogar.css">
     <style>
-        /* Estilos especificos de MediDo (no del design system) */
+        body {
+            background: var(--ck-bg);
+            color: var(--ck-on-surface);
+            font-family: var(--ck-fuente);
+            margin: 0; min-height: 100vh;
+        }
+        .md-main { max-width: 1400px; margin: 0 auto; padding: 1rem 1.5rem 2rem; }
 
-        /* Semaforo global */
-        .medido-semaforo {
-            display: flex;
-            align-items: center;
-            gap: var(--gap-md);
-            margin-bottom: var(--gap-xl);
-            padding: var(--gap-lg);
-            background: var(--surface-container-lowest);
-            border-radius: var(--radio-xl);
-            box-shadow: var(--sombra-sm);
+        .md-mobile-only { display: none; }
+        @media (max-width: 900px) {
+            .md-mobile-only { display: flex; }
+            .md-desktop-only { display: none !important; }
         }
 
-        .medido-semaforo__icono {
-            width: 56px;
-            height: 56px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
+        /* ── Drawer móvil ── */
+        .md-drawer-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.5); z-index: 200;
         }
-
-        .medido-semaforo__icono--ok { background: var(--exito); color: #fff; }
-        .medido-semaforo__icono--warning { background: var(--aviso); color: #fff; }
-        .medido-semaforo__icono--danger { background: var(--peligro); color: #fff; }
-
-        .medido-semaforo__texto {
-            font-family: var(--fuente-titular);
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: var(--on-surface);
+        .md-drawer {
+            position: fixed; top: 0; right: 0; bottom: 0; width: 220px;
+            background: var(--ck-bg2); border-left: 1px solid var(--ck-line);
+            z-index: 201; display: flex; flex-direction: column;
+            padding: 1rem 0.75rem; gap: 0.2rem;
+            transform: translateX(100%); transition: transform 0.25s ease;
         }
-
-        .medido-semaforo__detalle {
-            font-size: 0.8rem;
-            color: var(--on-surface-variant);
-            margin-top: 0.15rem;
+        .md-drawer--abierto { transform: translateX(0); }
+        .md-drawer__cerrar {
+            align-self: flex-end; background: none; border: none;
+            color: var(--ck-on-variant); cursor: pointer;
+            font-size: 1.4rem; line-height: 1; padding: 0.25rem 0.5rem; margin-bottom: 0.5rem;
         }
+        .md-drawer__item {
+            background: none; border: none; color: var(--ck-on-variant);
+            font-family: var(--ck-fuente); font-size: 0.65rem; font-weight: 700;
+            letter-spacing: 0.12em; text-transform: uppercase;
+            padding: 0.55rem 0.75rem; border-radius: 3px;
+            cursor: pointer; text-align: left;
+            transition: background 0.15s, color 0.15s;
+        }
+        .md-drawer__item:hover { background: rgba(128,128,128,0.1); color: var(--ck-on-surface); }
+        .md-drawer__item--activo { color: var(--ck-accent); }
+        .md-drawer__sep { height: 1px; background: var(--ck-line); margin: 0.25rem 0; }
 
-        /* Grid de tarjetas de metricas */
-        .medido-metricas {
+        /* ── Status bar ── */
+        .md-status {
+            display: flex; align-items: center; gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            background: var(--ck-bg2); border: 1px solid var(--ck-line);
+            margin-bottom: 1.25rem;
+        }
+        .md-status__texto {
+            font-size: 0.72rem; font-weight: 700;
+            letter-spacing: 0.08em; color: var(--ck-on-surface);
+        }
+        .md-status__detalle { font-size: 0.62rem; color: var(--ck-on-variant); margin-left: 0.5rem; }
+
+        /* ── Pestañas ── */
+        .md-tabs {
+            display: flex; border-bottom: 1px solid var(--ck-line);
+            margin-bottom: 1.25rem; flex-wrap: wrap;
+        }
+        .md-tab {
+            background: none; border: none;
+            font-family: var(--ck-fuente); font-size: 0.62rem; font-weight: 700;
+            letter-spacing: 0.12em; text-transform: uppercase;
+            color: var(--ck-on-variant); padding: 0.55rem 0.9rem;
+            cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px;
+            transition: color 0.15s, border-color 0.15s;
+        }
+        .md-tab:hover { color: var(--ck-on-surface); }
+        .md-tab--activo { color: var(--ck-accent); border-bottom-color: var(--ck-accent); }
+
+        .md-panel { display: none; }
+        .md-panel--activo { display: block; }
+
+        /* ── Sección con título ── */
+        .md-seccion { margin-bottom: 1.5rem; }
+        .md-seccion__titulo {
+            font-size: 0.52rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.18em;
+            color: var(--ck-on-variant);
+            margin-bottom: 0.75rem;
+            display: flex; align-items: center; gap: 0.4rem;
+        }
+        .md-seccion__titulo .material-symbols-outlined { font-size: 0.85rem; color: var(--ck-accent); }
+        .md-seccion__titulo span.sub { font-weight: 400; margin-left: 0.35rem; color: var(--ck-on-variant); opacity: 0.7; }
+
+        /* ── Tarjetas de métricas ── */
+        .md-metricas {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-            gap: var(--gap-md);
-            margin-bottom: var(--gap-xl);
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1px; background: var(--ck-line);
+            margin-bottom: 1rem;
         }
-
-        .medido-tarjeta {
-            background: var(--surface-container-lowest);
-            border-radius: var(--radio-xl);
-            padding: var(--gap-lg);
-            box-shadow: var(--sombra-sm);
-            transition: box-shadow var(--transicion);
+        .md-tarjeta {
+            background: var(--ck-bg2); padding: 0.9rem 1rem;
         }
-
-        .medido-tarjeta:hover { box-shadow: var(--sombra-md); }
-
-        .medido-tarjeta__label {
-            font-family: var(--fuente-titular);
-            font-size: 0.6rem;
-            text-transform: uppercase;
-            letter-spacing: 0.12em;
-            color: var(--on-surface-variant);
-            font-weight: 700;
-            margin-bottom: var(--gap-sm);
+        .md-tarjeta__label {
+            font-size: 0.48rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.18em;
+            color: var(--ck-on-variant); margin-bottom: 0.35rem;
         }
-
-        .medido-tarjeta__valor {
-            font-family: var(--fuente-titular);
-            font-size: 1.6rem;
-            font-weight: 800;
-            letter-spacing: -0.02em;
-            margin-bottom: var(--gap-sm);
+        .md-tarjeta__valor {
+            font-size: 1.5rem; font-weight: 700;
+            letter-spacing: -0.02em; line-height: 1;
+            margin-bottom: 0.4rem;
         }
+        .md-tarjeta__valor--ok     { color: var(--ck-success); }
+        .md-tarjeta__valor--warning { color: var(--ck-warn); }
+        .md-tarjeta__valor--danger  { color: var(--ck-danger); }
+        .md-tarjeta__valor--neutral { color: var(--ck-accent); }
+        .md-tarjeta__sub { font-size: 0.6rem; color: var(--ck-on-variant); margin-top: 0.25rem; }
 
-        .medido-tarjeta__valor--ok { color: var(--exito); }
-        .medido-tarjeta__valor--warning { color: var(--aviso); }
-        .medido-tarjeta__valor--danger { color: var(--peligro); }
-
-        /* Barra de progreso */
-        .medido-barra {
-            height: 8px;
-            border-radius: 4px;
-            background: var(--surface-container);
-            overflow: hidden;
+        /* ── Barra de progreso ── */
+        .md-barra {
+            height: 2px; background: rgba(128,128,128,0.12); overflow: hidden;
         }
-
-        .medido-barra__relleno {
-            height: 100%;
-            border-radius: 4px;
-            transition: width 0.5s ease, background 0.3s ease;
+        .md-barra__relleno {
+            height: 100%; transition: width 0.6s ease;
         }
+        .md-barra__relleno--ok      { background: var(--ck-success); }
+        .md-barra__relleno--warning  { background: var(--ck-warn); }
+        .md-barra__relleno--danger   { background: var(--ck-danger); }
 
-        .medido-barra__relleno--ok { background: var(--exito); }
-        .medido-barra__relleno--warning { background: var(--aviso); }
-        .medido-barra__relleno--danger { background: var(--peligro); }
-
-        .medido-tarjeta__sub {
-            font-size: 0.7rem;
-            color: var(--on-surface-variant);
-            margin-top: var(--gap-xs);
+        /* ── Grid de items (contenedores / servicios) ── */
+        .md-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 1px; background: var(--ck-line);
         }
-
-        /* Seccion con titulo */
-        .medido-seccion {
-            margin-bottom: var(--gap-xl);
+        .md-item {
+            display: flex; align-items: center; gap: 0.75rem;
+            padding: 0.65rem 0.85rem;
+            background: var(--ck-bg2);
         }
-
-        .medido-seccion__titulo {
-            font-family: var(--fuente-titular);
-            font-size: 0.85rem;
-            font-weight: 700;
-            color: var(--on-surface);
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            margin-bottom: var(--gap-md);
-            display: flex;
-            align-items: center;
-            gap: var(--gap-sm);
+        .md-item__dot {
+            width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
         }
-
-        .medido-seccion__titulo .material-symbols-outlined {
-            font-size: 1.1rem;
-            color: var(--primary);
+        .md-item__dot--running, .md-item__dot--ok     { background: var(--ck-success); box-shadow: 0 0 5px var(--ck-success); }
+        .md-item__dot--stopped, .md-item__dot--caido,
+        .md-item__dot--exited,  .md-item__dot--error  { background: var(--ck-danger);  box-shadow: 0 0 5px var(--ck-danger); }
+        .md-item__dot--lento,   .md-item__dot--paused { background: var(--ck-warn);    box-shadow: 0 0 5px var(--ck-warn); }
+        [data-tema-cockpit="light"] .md-item__dot--running,
+        [data-tema-cockpit="light"] .md-item__dot--ok     { box-shadow: none; }
+        [data-tema-cockpit="light"] .md-item__dot--stopped,
+        [data-tema-cockpit="light"] .md-item__dot--caido  { box-shadow: none; }
+        [data-tema-cockpit="light"] .md-item__dot--lento  { box-shadow: none; }
+        .md-item__nombre {
+            font-size: 0.72rem; font-weight: 700; color: var(--ck-on-surface); flex: 1;
         }
+        .md-item__detalle { font-size: 0.62rem; color: var(--ck-on-variant); text-align: right; }
 
-        /* Grid de contenedores y servicios */
-        .medido-grid {
+        /* ── VMs ── */
+        .md-vms {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-            gap: var(--gap-sm);
+            gap: 1px; background: var(--ck-line); margin-bottom: 1rem;
         }
-
-        .medido-item {
-            display: flex;
-            align-items: center;
-            gap: var(--gap-md);
-            padding: 0.75rem var(--gap-md);
-            background: var(--surface-container-lowest);
-            border-radius: var(--radio-lg);
-            box-shadow: var(--sombra-sm);
-            transition: box-shadow var(--transicion);
+        .md-vm { background: var(--ck-bg2); padding: 0.9rem 1rem; }
+        .md-vm__nombre {
+            font-size: 0.65rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.12em;
+            color: var(--ck-on-surface);
+            margin-bottom: 0.6rem;
+            display: flex; align-items: center; gap: 0.4rem;
         }
-
-        .medido-item:hover { box-shadow: var(--sombra-md); }
-
-        .medido-item__estado {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            flex-shrink: 0;
+        .md-vm__fila {
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 0.62rem; color: var(--ck-on-variant); margin-bottom: 0.2rem;
         }
+        .md-vm__val { font-weight: 700; color: var(--ck-on-surface); }
 
-        .medido-item__estado--running { background: var(--exito); }
-        .medido-item__estado--ok { background: var(--exito); }
-        .medido-item__estado--stopped { background: var(--peligro); }
-        .medido-item__estado--exited { background: var(--peligro); }
-        .medido-item__estado--caido { background: var(--peligro); }
-        .medido-item__estado--error { background: var(--peligro); }
-        .medido-item__estado--lento { background: var(--aviso); }
-        .medido-item__estado--paused { background: var(--aviso); }
-
-        .medido-item__nombre {
-            font-family: var(--fuente-titular);
-            font-size: 0.8rem;
-            font-weight: 700;
-            color: var(--on-surface);
-            flex: 1;
-        }
-
-        .medido-item__detalle {
-            font-size: 0.65rem;
-            color: var(--on-surface-variant);
-            text-align: right;
-        }
-
-        /* VMs grid */
-        .medido-vms {
+        /* ── Storage ── */
+        .md-storage {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: var(--gap-md);
-            margin-bottom: var(--gap-md);
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1px; background: var(--ck-line);
+        }
+        .md-storage-item { background: var(--ck-bg2); padding: 0.9rem 1rem; }
+        .md-storage-item__nombre {
+            font-size: 0.55rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.15em;
+            color: var(--ck-on-variant); margin-bottom: 0.35rem;
+        }
+        .md-storage-item__info { font-size: 0.6rem; color: var(--ck-on-variant); margin-top: 0.3rem; }
+
+        /* ── Gráfica historial ── */
+        .md-grafica-wrap {
+            background: var(--ck-bg2); border: 1px solid var(--ck-line);
+            padding: 1rem; margin-bottom: 0.75rem;
+        }
+        .md-grafica-wrap canvas { width: 100%; height: 200px; display: block; }
+        .md-leyenda {
+            display: flex; gap: 1.25rem; justify-content: center;
+            flex-wrap: wrap; margin-top: 0.6rem;
+        }
+        .md-leyenda__item {
+            display: flex; align-items: center; gap: 0.35rem;
+            font-size: 0.55rem; font-weight: 700;
+            letter-spacing: 0.08em; color: var(--ck-on-variant);
+        }
+        .md-leyenda__color { width: 16px; height: 2px; border-radius: 1px; }
+
+        /* ── Alertas ── */
+        .md-alertas-lista { display: flex; flex-direction: column; gap: 1px; background: var(--ck-line); }
+        .md-alerta {
+            display: flex; align-items: center; gap: 0.75rem;
+            padding: 0.65rem 0.9rem;
+            background: var(--ck-bg2);
+            border-left: 2px solid var(--ck-warn);
+        }
+        .md-alerta--resuelta { opacity: 0.45; border-left-color: var(--ck-line); }
+        .md-alerta__texto { flex: 1; font-size: 0.72rem; color: var(--ck-on-surface); }
+        .md-alerta__fecha { font-size: 0.6rem; color: var(--ck-on-variant); white-space: nowrap; }
+        .md-alerta__btn {
+            background: none; border: 1px solid var(--ck-line);
+            color: var(--ck-on-variant);
+            font-family: var(--ck-fuente); font-size: 0.6rem; font-weight: 700;
+            letter-spacing: 0.08em; text-transform: uppercase;
+            padding: 0.2rem 0.6rem; cursor: pointer;
+            transition: border-color 0.15s, color 0.15s;
+        }
+        .md-alerta__btn:hover { border-color: var(--ck-success); color: var(--ck-success); }
+
+        /* ── Claude — tabla ── */
+        .md-filtros {
+            display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; align-items: center;
+        }
+        .md-select {
+            background: var(--ck-bg3); border: 1px solid var(--ck-line);
+            color: var(--ck-on-variant);
+            font-family: var(--ck-fuente); font-size: 0.62rem; font-weight: 700;
+            letter-spacing: 0.08em; padding: 0.35rem 0.6rem;
+            flex: 1; min-width: 100px; cursor: pointer;
+        }
+        .md-select:focus { outline: none; border-color: var(--ck-accent); }
+        .md-btn {
+            background: var(--ck-bg3); border: 1px solid var(--ck-line);
+            color: var(--ck-on-variant);
+            font-family: var(--ck-fuente); font-size: 0.62rem; font-weight: 700;
+            letter-spacing: 0.1em; text-transform: uppercase;
+            padding: 0.35rem 0.9rem; cursor: pointer; flex-shrink: 0;
+            display: flex; align-items: center; gap: 0.35rem;
+            transition: border-color 0.15s, color 0.15s;
+        }
+        .md-btn:hover { border-color: var(--ck-accent-dim); color: var(--ck-on-surface); }
+
+        .md-tabla-wrap { overflow-x: auto; margin-bottom: 1rem; }
+        .md-tabla { width: 100%; border-collapse: collapse; font-size: 0.68rem; }
+        .md-tabla thead tr { border-bottom: 1px solid var(--ck-line-bright); }
+        .md-tabla th {
+            font-size: 0.45rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.18em;
+            color: var(--ck-on-variant); padding: 0.45rem 0.65rem; text-align: left; white-space: nowrap;
+        }
+        .md-tabla td {
+            padding: 0.5rem 0.65rem; border-bottom: 1px solid var(--ck-line); vertical-align: middle;
+        }
+        .md-tabla tbody tr:hover { background: var(--ck-row-hover); }
+        .md-tabla .sub-tabla { background: var(--ck-bg3); }
+        .md-tabla .sub-tabla td { padding: 0.4rem 0.65rem; }
+
+        .md-totales {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 1px; background: var(--ck-line);
+        }
+        .md-total-item { background: var(--ck-bg2); padding: 0.75rem 1rem; }
+        .md-total-item__label {
+            font-size: 0.45rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.18em;
+            color: var(--ck-on-variant); margin-bottom: 0.25rem;
+        }
+        .md-total-item__val {
+            font-size: 1.3rem; font-weight: 700; color: var(--ck-accent); line-height: 1;
         }
 
-        .medido-vm {
-            background: var(--surface-container-lowest);
-            border-radius: var(--radio-xl);
-            padding: var(--gap-lg);
-            box-shadow: var(--sombra-sm);
+        .md-expand-btn {
+            background: none; border: 1px solid var(--ck-line);
+            color: var(--ck-on-variant); cursor: pointer; padding: 1px 4px;
+            font-family: var(--ck-fuente); font-size: 0.55rem;
         }
-
-        .medido-vm__nombre {
-            font-family: var(--fuente-titular);
-            font-size: 0.85rem;
-            font-weight: 700;
-            color: var(--on-surface);
-            margin-bottom: var(--gap-sm);
-            display: flex;
-            align-items: center;
-            gap: var(--gap-sm);
+        .md-expand-btn:hover { border-color: var(--ck-accent-dim); color: var(--ck-on-surface); }
+        .md-del-btn {
+            background: none; border: 1px solid rgba(232,84,84,0.3);
+            color: var(--ck-danger); cursor: pointer; padding: 2px 5px;
         }
+        .md-del-btn:hover { border-color: var(--ck-danger); }
+        .md-del-btn .material-symbols-outlined { font-size: 0.9rem; vertical-align: middle; }
 
-        .medido-vm__fila {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.72rem;
-            color: var(--on-surface-variant);
-            margin-bottom: 0.35rem;
-        }
-
-        .medido-vm__fila-valor {
-            font-weight: 700;
-            font-family: var(--fuente-titular);
-        }
-
-        /* Grafica historial */
-        .medido-grafica-contenedor {
-            background: var(--surface-container-lowest);
-            border-radius: var(--radio-xl);
-            padding: var(--gap-lg);
-            box-shadow: var(--sombra-sm);
-        }
-
-        .medido-grafica-contenedor canvas {
-            width: 100%;
-            height: 200px;
-        }
-
-        .medido-leyenda {
-            display: flex;
-            gap: var(--gap-lg);
-            justify-content: center;
-            margin-top: var(--gap-sm);
-            flex-wrap: wrap;
-        }
-
-        .medido-leyenda__item {
-            display: flex;
-            align-items: center;
-            gap: 0.3rem;
-            font-size: 0.65rem;
-            font-family: var(--fuente-titular);
-            font-weight: 600;
-            color: var(--on-surface-variant);
-        }
-
-        .medido-leyenda__color {
-            width: 12px;
-            height: 3px;
-            border-radius: 2px;
-        }
-
-        /* Alertas */
-        .medido-alertas-lista {
-            display: flex;
-            flex-direction: column;
-            gap: var(--gap-sm);
-        }
-
-        .medido-alerta {
-            display: flex;
-            align-items: center;
-            gap: var(--gap-md);
-            padding: 0.75rem var(--gap-md);
-            background: var(--surface-container-lowest);
-            border-radius: var(--radio-lg);
-            border-left: 3px solid var(--aviso);
-        }
-
-        .medido-alerta--resuelta {
-            opacity: 0.5;
-            border-left-color: var(--surface-container);
-        }
-
-        .medido-alerta__texto {
-            flex: 1;
-            font-size: 0.8rem;
-            color: var(--on-surface);
-        }
-
-        .medido-alerta__fecha {
-            font-size: 0.65rem;
-            color: var(--on-surface-variant);
-        }
-
-        .medido-alerta__btn {
-            padding: 0.3rem 0.7rem;
-            border: none;
-            border-radius: var(--radio-full);
-            background: var(--primary);
-            color: var(--on-primary);
-            font-size: 0.65rem;
-            font-weight: 700;
-            cursor: pointer;
-            font-family: var(--fuente-titular);
-        }
-
-        .medido-sin-datos {
-            text-align: center;
-            padding: 1.5rem;
-            color: var(--on-surface-variant);
-            font-style: italic;
-            font-size: 0.85rem;
-        }
-
-        /* Tabs de navegacion interna */
-        .medido-tabs {
-            display: flex;
-            gap: var(--gap-xs);
-            margin-bottom: var(--gap-xl);
-            flex-wrap: wrap;
-        }
-
-        .medido-tab {
-            padding: 0.5rem 1rem;
-            border: none;
-            border-radius: var(--radio-full);
-            background: var(--surface-container);
-            font-family: var(--fuente-titular);
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            cursor: pointer;
-            color: var(--on-surface-variant);
-            transition: background var(--transicion), color var(--transicion);
-        }
-
-        .medido-tab:hover { background: var(--surface-container-high); }
-
-        .medido-tab--activo {
-            background: var(--primary);
-            color: var(--on-primary);
-        }
-
-        .medido-panel { display: none; }
-        .medido-panel--activo { display: block; }
-
-        /* Almacenamiento */
-        .medido-storage {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            gap: var(--gap-md);
-        }
-
-        .medido-storage-item {
-            background: var(--surface-container-lowest);
-            border-radius: var(--radio-xl);
-            padding: var(--gap-lg);
-            box-shadow: var(--sombra-sm);
-        }
-
-        .medido-storage-item__nombre {
-            font-family: var(--fuente-titular);
-            font-size: 0.8rem;
-            font-weight: 700;
-            color: var(--on-surface);
-            margin-bottom: var(--gap-sm);
-        }
-
-        .medido-storage-item__info {
-            font-size: 0.7rem;
-            color: var(--on-surface-variant);
-            margin-top: var(--gap-xs);
+        .sin-datos {
+            text-align: center; padding: 1.5rem; color: var(--ck-on-variant); font-size: 0.7rem;
         }
     </style>
 </head>
 <body>
-    <!-- ── Lumina (gradiente decorativo) ── -->
-    <div class="hogar-lumina"></div>
 
-    <!-- ── Header flotante ── -->
-    <header class="hogar-header">
-        <div class="hogar-header__barra">
-            <a href="/salud/" class="hogar-header__marca">
-                <span class="material-symbols-outlined filled hogar-header__icono-marca">monitor_heart</span>
-                <div>
-                    <div class="hogar-header__titulo">MediDo</div>
-                    <div class="hogar-header__subtitulo">Metricas del hogar</div>
-                </div>
+    <!-- ======== HEADER ======== -->
+    <header class="ck-header">
+        <div class="ck-hdr-izq">
+            <a href="#" onclick="window.location=window.location.origin;return false"
+               class="ck-marca-box" style="text-decoration:none">
+                <div class="ck-marca-dot"></div>
             </a>
-            <button class="hogar-header__menu-btn" id="btnMenu">
-                <span class="material-symbols-outlined">menu</span>
+            <div>
+                <div class="ck-marca-txt">HOGAR<span>OS</span></div>
+                <div class="ck-marca-sub">métricas del hogar</div>
+            </div>
+            <div class="ck-sep"></div>
+            <span style="font-size:0.75rem;font-weight:700;color:var(--ck-accent);letter-spacing:0.15em;flex-shrink:0">MEDIDO</span>
+            <div class="ck-sep md-desktop-only"></div>
+            <nav class="ck-nav md-desktop-only">
+                <button id="tab-btn-general"      class="activo" onclick="cambiarTab('general')">GENERAL</button>
+                <button id="tab-btn-proxmox"               onclick="cambiarTab('proxmox')">PROXMOX</button>
+                <button id="tab-btn-contenedores"          onclick="cambiarTab('contenedores')">CONTENEDORES</button>
+                <button id="tab-btn-servicios"             onclick="cambiarTab('servicios')">SERVICIOS</button>
+                <button id="tab-btn-historial"             onclick="cambiarTab('historial')">HISTORIAL</button>
+                <button id="tab-btn-alertas"               onclick="cambiarTab('alertas')">ALERTAS</button>
+                <button id="tab-btn-claude"                onclick="cambiarTab('claude')">CLAUDE</button>
+            </nav>
+        </div>
+        <div class="ck-hdr-der">
+            <button id="md-tema-btn" class="ck-tema-btn" title="Cambiar tema">
+                <span id="md-tema-icono" class="material-symbols-outlined" style="font-size:1rem">light_mode</span>
+            </button>
+            <div class="ck-reloj">
+                <div class="ck-reloj__hora" id="md-reloj-hora">--:--:--</div>
+                <div class="ck-reloj__fecha" id="md-reloj-fecha"></div>
+            </div>
+            <button class="ck-tema-btn md-mobile-only" id="btnMenuMobile">
+                <span class="material-symbols-outlined" style="font-size:1.2rem">menu</span>
             </button>
         </div>
     </header>
 
-    <!-- ── Drawer de navegacion ── -->
-    <div class="hogar-drawer-overlay oculto" id="drawerOverlay"></div>
-    <nav class="hogar-drawer oculto" id="drawerNav">
-        <button class="hogar-drawer__cerrar" id="btnCerrarDrawer">
-            <span class="material-symbols-outlined">close</span>
-        </button>
-        <span class="hogar-drawer__titulo">Navegacion</span>
-        <a href="/salud/" class="hogar-drawer__enlace hogar-drawer__enlace--activo">
-            <span class="material-symbols-outlined">monitor_heart</span>
-            <span>Salud</span>
-        </a>
-        <div class="hogar-drawer__separador"></div>
-        <button class="hogar-drawer__enlace" onclick="window.location=window.location.origin+'/red/'">
-            <span class="material-symbols-outlined">lan</span>
-            <span>Red</span>
-        </button>
-        <button class="hogar-drawer__enlace" onclick="window.location=window.location.origin+'/finanzas/'">
-            <span class="material-symbols-outlined">payments</span>
-            <span>Finanzas</span>
-        </button>
-        <div class="hogar-drawer__separador"></div>
-        <button class="hogar-drawer__enlace" onclick="window.location=window.location.origin">
-            <span class="material-symbols-outlined">roofing</span>
-            <span>Ir al Portal</span>
-        </button>
-        <button class="hogar-drawer__enlace" id="btnTema">
-            <span class="material-symbols-outlined" id="iconoTemaDrawer">dark_mode</span>
-            <span>Cambiar tema</span>
-        </button>
+    <!-- ======== DRAWER MÓVIL ======== -->
+    <div class="md-drawer-overlay md-mobile-only" id="drawerOverlay" style="display:none"
+         onclick="cerrarDrawer()"></div>
+    <nav class="md-drawer md-mobile-only" id="drawerNav">
+        <button class="md-drawer__cerrar" onclick="cerrarDrawer()">&times;</button>
+        <button class="md-drawer__item md-drawer__item--activo" id="drawer-general"
+                onclick="cambiarTab('general');cerrarDrawer()">GENERAL</button>
+        <button class="md-drawer__item" id="drawer-proxmox"
+                onclick="cambiarTab('proxmox');cerrarDrawer()">PROXMOX</button>
+        <button class="md-drawer__item" id="drawer-contenedores"
+                onclick="cambiarTab('contenedores');cerrarDrawer()">CONTENEDORES</button>
+        <button class="md-drawer__item" id="drawer-servicios"
+                onclick="cambiarTab('servicios');cerrarDrawer()">SERVICIOS</button>
+        <button class="md-drawer__item" id="drawer-historial"
+                onclick="cambiarTab('historial');cerrarDrawer()">HISTORIAL</button>
+        <button class="md-drawer__item" id="drawer-alertas"
+                onclick="cambiarTab('alertas');cerrarDrawer()">ALERTAS</button>
+        <button class="md-drawer__item" id="drawer-claude"
+                onclick="cambiarTab('claude');cerrarDrawer()">CLAUDE</button>
+        <div class="md-drawer__sep"></div>
+        <button class="md-drawer__item" onclick="window.location=window.location.origin+'/red/'">RED</button>
+        <button class="md-drawer__item" onclick="window.location=window.location.origin+'/finanzas/'">FINANZAS</button>
+        <button class="md-drawer__item" onclick="window.location=window.location.origin">PORTAL</button>
+        <div class="md-drawer__sep"></div>
+        <button class="md-drawer__item" id="md-tema-btn-mobile">TEMA</button>
     </nav>
 
-    <!-- ── Contenido principal ── -->
-    <main class="hogar-contenedor">
+    <!-- ======== CONTENIDO PRINCIPAL ======== -->
+    <main class="md-main">
 
-        <!-- Semaforo global -->
-        <div class="medido-semaforo" id="semaforo">
-            <div class="medido-semaforo__icono medido-semaforo__icono--ok" id="semaforoIcono">
-                <span class="material-symbols-outlined" style="font-size:1.6rem">check_circle</span>
-            </div>
-            <div>
-                <div class="medido-semaforo__texto" id="semaforoTexto">Cargando...</div>
-                <div class="medido-semaforo__detalle" id="semaforoDetalle"></div>
-            </div>
+        <!-- Pestañas móvil -->
+        <div class="md-tabs md-mobile-only" style="display:flex">
+            <button class="md-tab md-tab--activo" data-tab="general">GENERAL</button>
+            <button class="md-tab" data-tab="proxmox">PROXMOX</button>
+            <button class="md-tab" data-tab="contenedores">CONT.</button>
+            <button class="md-tab" data-tab="servicios">SERV.</button>
+            <button class="md-tab" data-tab="historial">HIST.</button>
+            <button class="md-tab" data-tab="alertas">ALERTAS</button>
+            <button class="md-tab" data-tab="claude">CLAUDE</button>
         </div>
 
-        <!-- Tabs -->
-        <div class="medido-tabs">
-            <button class="medido-tab medido-tab--activo" data-tab="general" onclick="cambiarTab('general')">General</button>
-            <button class="medido-tab" data-tab="proxmox" onclick="cambiarTab('proxmox')">Proxmox</button>
-            <button class="medido-tab" data-tab="contenedores" onclick="cambiarTab('contenedores')">Contenedores</button>
-            <button class="medido-tab" data-tab="servicios" onclick="cambiarTab('servicios')">Servicios</button>
-            <button class="medido-tab" data-tab="historial" onclick="cambiarTab('historial')">Historial</button>
-            <button class="medido-tab" data-tab="alertas" onclick="cambiarTab('alertas')">Alertas</button>
-            <button class="medido-tab" data-tab="claude" onclick="cambiarTab('claude')">CLAUDE</button>
+        <!-- Status bar -->
+        <div class="md-status" id="semaforo">
+            <div class="status-dot status-dot--ok" id="semaforoDot"></div>
+            <div class="md-status__texto" id="semaforoTexto">Cargando...</div>
+            <div class="md-status__detalle" id="semaforoDetalle"></div>
         </div>
 
         <!-- ═══ PANEL: General ═══ -->
-        <div class="medido-panel medido-panel--activo" id="panelGeneral">
-            <div class="medido-metricas" id="metricasGeneral">
-                <p class="medido-sin-datos">Cargando metricas...</p>
+        <div class="md-panel md-panel--activo" id="panelGeneral">
+            <div class="md-metricas" id="metricasGeneral">
+                <div class="md-tarjeta"><div class="sin-datos">Cargando...</div></div>
             </div>
         </div>
 
         <!-- ═══ PANEL: Proxmox ═══ -->
-        <div class="medido-panel" id="panelProxmox">
-            <!-- Host -->
-            <div class="medido-seccion">
-                <div class="medido-seccion__titulo">
+        <div class="md-panel" id="panelProxmox">
+            <div class="md-seccion">
+                <div class="md-seccion__titulo">
                     <span class="material-symbols-outlined">dns</span> Host Proxmox
                 </div>
-                <div class="medido-metricas" id="metricasHost"></div>
+                <div class="md-metricas" id="metricasHost"></div>
             </div>
-
-            <!-- VMs -->
-            <div class="medido-seccion">
-                <div class="medido-seccion__titulo">
-                    <span class="material-symbols-outlined">computer</span> Maquinas Virtuales
+            <div class="md-seccion">
+                <div class="md-seccion__titulo">
+                    <span class="material-symbols-outlined">computer</span> Máquinas Virtuales
                 </div>
-                <div class="medido-vms" id="listaVMs"></div>
+                <div class="md-vms" id="listaVMs"></div>
             </div>
-
-            <!-- Almacenamiento -->
-            <div class="medido-seccion">
-                <div class="medido-seccion__titulo">
+            <div class="md-seccion">
+                <div class="md-seccion__titulo">
                     <span class="material-symbols-outlined">storage</span> Almacenamiento
                 </div>
-                <div class="medido-storage" id="listaStorage"></div>
+                <div class="md-storage" id="listaStorage"></div>
             </div>
         </div>
 
         <!-- ═══ PANEL: Contenedores ═══ -->
-        <div class="medido-panel" id="panelContenedores">
-            <div class="medido-seccion">
-                <div class="medido-seccion__titulo">
+        <div class="md-panel" id="panelContenedores">
+            <div class="md-seccion">
+                <div class="md-seccion__titulo">
                     <span class="material-symbols-outlined">deployed_code</span>
                     Contenedores Docker
-                    <span id="conteoContenedores" style="font-weight:400;font-size:0.7rem;color:var(--on-surface-variant)"></span>
+                    <span class="sub" id="conteoContenedores"></span>
                 </div>
-                <div class="medido-grid" id="listaContenedores"></div>
+                <div class="md-grid" id="listaContenedores"></div>
             </div>
         </div>
 
         <!-- ═══ PANEL: Servicios ═══ -->
-        <div class="medido-panel" id="panelServicios">
-            <div class="medido-seccion">
-                <div class="medido-seccion__titulo">
+        <div class="md-panel" id="panelServicios">
+            <div class="md-seccion">
+                <div class="md-seccion__titulo">
                     <span class="material-symbols-outlined">lan</span> Health Checks
                 </div>
-                <div class="medido-grid" id="listaServicios"></div>
+                <div class="md-grid" id="listaServicios"></div>
             </div>
         </div>
 
         <!-- ═══ PANEL: Historial ═══ -->
-        <div class="medido-panel" id="panelHistorial">
-            <div class="medido-seccion">
-                <div class="medido-seccion__titulo">
+        <div class="md-panel" id="panelHistorial">
+            <div class="md-seccion">
+                <div class="md-seccion__titulo">
                     <span class="material-symbols-outlined">timeline</span> Historial 24h
                 </div>
-                <div class="medido-grafica-contenedor">
+                <div class="md-grafica-wrap">
                     <canvas id="graficaHistorial"></canvas>
-                    <div class="medido-leyenda">
-                        <div class="medido-leyenda__item">
-                            <div class="medido-leyenda__color" style="background:#26a69a"></div> CPU Host
+                    <div class="md-leyenda">
+                        <div class="md-leyenda__item">
+                            <div class="md-leyenda__color" style="background:#26a69a"></div> CPU Host
                         </div>
-                        <div class="medido-leyenda__item">
-                            <div class="medido-leyenda__color" style="background:#ef5350"></div> RAM Host
+                        <div class="md-leyenda__item">
+                            <div class="md-leyenda__color" style="background:#ef5350"></div> RAM Host
                         </div>
-                        <div class="medido-leyenda__item">
-                            <div class="medido-leyenda__color" style="background:#42a5f5"></div> CPU VM
+                        <div class="md-leyenda__item">
+                            <div class="md-leyenda__color" style="background:#42a5f5"></div> CPU VM
                         </div>
-                        <div class="medido-leyenda__item">
-                            <div class="medido-leyenda__color" style="background:#ffa726"></div> RAM VM
+                        <div class="md-leyenda__item">
+                            <div class="md-leyenda__color" style="background:#ffa726"></div> RAM VM
                         </div>
                     </div>
                 </div>
@@ -535,46 +467,40 @@
         </div>
 
         <!-- ═══ PANEL: Alertas ═══ -->
-        <div class="medido-panel" id="panelAlertas">
-            <div class="medido-seccion">
-                <div class="medido-seccion__titulo">
+        <div class="md-panel" id="panelAlertas">
+            <div class="md-seccion">
+                <div class="md-seccion__titulo">
                     <span class="material-symbols-outlined">notifications</span> Alertas
                 </div>
-                <div class="medido-alertas-lista" id="listaAlertas">
-                    <p class="medido-sin-datos">Sin alertas</p>
+                <div class="md-alertas-lista" id="listaAlertas">
+                    <p class="sin-datos">Sin alertas</p>
                 </div>
             </div>
         </div>
 
         <!-- ═══ PANEL: Claude Code ═══ -->
-        <div class="medido-panel" id="panelClaude">
-            <div class="medido-seccion">
-                <div class="medido-seccion__titulo">
+        <div class="md-panel" id="panelClaude">
+            <div class="md-seccion">
+                <div class="md-seccion__titulo">
                     <span class="material-symbols-outlined">code</span> Sesiones Claude Code
                 </div>
-
-                <!-- Filtros -->
-                <div style="display: flex; gap: var(--gap-sm); margin-bottom: var(--gap-md); flex-wrap: wrap;">
-                    <select id="filtroPeriodo" style="flex: 1; min-width: 120px;">
+                <div class="md-filtros">
+                    <select id="filtroPeriodo" class="md-select">
                         <option value="dia">Hoy</option>
                         <option value="semana">Esta semana</option>
                         <option value="mes" selected>Este mes</option>
                     </select>
-                    <select id="filtroProyecto" style="flex: 1; min-width: 120px;">
+                    <select id="filtroProyecto" class="md-select">
                         <option value="">Proyecto: Todos</option>
                     </select>
-                    <button class="hogar-boton" onclick="cargarSesionesClaudeAPI()" style="flex-shrink: 0;">
-                        Cargar
-                    </button>
+                    <button class="md-btn" onclick="cargarSesionesClaudeAPI()">CARGAR</button>
                 </div>
-
-                <!-- Tabla -->
-                <div class="hogar-tabla-wrap">
-                    <table class="hogar-tabla">
+                <div class="md-tabla-wrap">
+                    <table class="md-tabla">
                         <thead>
                             <tr>
                                 <th>#</th>
-                                <th>Fecha/Hora</th>
+                                <th>Fecha / Hora</th>
                                 <th>Proyecto</th>
                                 <th>Input Tok</th>
                                 <th>Output Tok</th>
@@ -584,26 +510,22 @@
                             </tr>
                         </thead>
                         <tbody id="tablaSesionesClaudeAPI">
-                            <tr><td colspan="8" class="medido-sin-datos">Cargando...</td></tr>
+                            <tr><td colspan="8" class="sin-datos">Cargando...</td></tr>
                         </tbody>
                     </table>
                 </div>
-
-                <!-- Totales -->
-                <div style="margin-top: var(--gap-lg); padding: var(--gap-md); background: var(--surface-container-lowest); border-radius: var(--radio-md);">
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--gap-md);">
-                        <div>
-                            <div class="medido-tarjeta__label">SESIONES</div>
-                            <div class="medido-tarjeta__valor" id="sumaSesiones">0</div>
-                        </div>
-                        <div>
-                            <div class="medido-tarjeta__label">TOKENS TOTAL</div>
-                            <div class="medido-tarjeta__valor" id="sumaTokens">0</div>
-                        </div>
-                        <div>
-                            <div class="medido-tarjeta__label">COSTE USD</div>
-                            <div class="medido-tarjeta__valor" id="sumaCoste">$0.00</div>
-                        </div>
+                <div class="md-totales">
+                    <div class="md-total-item">
+                        <div class="md-total-item__label">Sesiones</div>
+                        <div class="md-total-item__val" id="sumaSesiones">0</div>
+                    </div>
+                    <div class="md-total-item">
+                        <div class="md-total-item__label">Tokens Total</div>
+                        <div class="md-total-item__val" id="sumaTokens">0</div>
+                    </div>
+                    <div class="md-total-item">
+                        <div class="md-total-item__label">Coste USD</div>
+                        <div class="md-total-item__val" id="sumaCoste">$0.00</div>
                     </div>
                 </div>
             </div>
@@ -613,236 +535,233 @@
 
     <script>
     /* ══════════════════════════════════════════════
-       MediDo — Frontend
+       MediDo — Frontend Cockpit
        ══════════════════════════════════════════════ */
 
-    // Autodetectar prefijo (funciona con y sin proxy Nginx)
     var prefijo = location.pathname.replace(/\/+$/, '');
-    var API = prefijo + "/api";
+    var API = prefijo + '/api';
 
-    // ── Drawer de navegacion ──
-    var drawer = document.getElementById("drawerNav");
-    var overlay = document.getElementById("drawerOverlay");
-
-    function toggleDrawer() {
-        drawer.classList.toggle("oculto");
-        overlay.classList.toggle("oculto");
+    /* ── Reloj ── */
+    function tickReloj() {
+        var now = new Date();
+        document.getElementById('md-reloj-hora').textContent =
+            now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        document.getElementById('md-reloj-fecha').textContent =
+            now.toLocaleDateString('es-ES', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase();
     }
+    tickReloj();
+    setInterval(tickReloj, 1000);
 
-    document.getElementById("btnMenu").addEventListener("click", toggleDrawer);
-    document.getElementById("btnCerrarDrawer").addEventListener("click", toggleDrawer);
-    overlay.addEventListener("click", toggleDrawer);
+    /* ── Toggle tema Cockpit ── */
+    (function initTema() {
+        var guardado = localStorage.getItem('hogar-cockpit-tema') || 'dark';
+        document.documentElement.setAttribute('data-tema-cockpit', guardado);
+        actualizarIconoTema();
+    })();
 
-    // ── Tema claro/oscuro ──
-    function actualizarIconosTema(tema) {
-        var icono = tema === "oscuro" ? "light_mode" : "dark_mode";
-        var el = document.getElementById("iconoTemaDrawer");
-        if (el) el.textContent = icono;
+    function actualizarIconoTema() {
+        var tema = document.documentElement.getAttribute('data-tema-cockpit');
+        var el = document.getElementById('md-tema-icono');
+        if (el) el.textContent = tema === 'dark' ? 'light_mode' : 'dark_mode';
     }
 
     function toggleTema() {
-        var html = document.documentElement;
-        var actual = html.getAttribute("data-tema");
-        var nuevo = actual === "oscuro" ? "claro" : "oscuro";
-        html.setAttribute("data-tema", nuevo);
-        localStorage.setItem("hogar-tema", nuevo);
-        actualizarIconosTema(nuevo);
+        var actual = document.documentElement.getAttribute('data-tema-cockpit');
+        var nuevo = actual === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-tema-cockpit', nuevo);
+        localStorage.setItem('hogar-cockpit-tema', nuevo);
+        actualizarIconoTema();
     }
 
-    (function() {
-        var tema = localStorage.getItem("hogar-tema") || "claro";
-        document.documentElement.setAttribute("data-tema", tema);
-        actualizarIconosTema(tema);
-    })();
+    document.getElementById('md-tema-btn').addEventListener('click', toggleTema);
+    document.getElementById('md-tema-btn-mobile').addEventListener('click', toggleTema);
 
-    document.getElementById("btnTema").addEventListener("click", toggleTema);
+    /* ── Drawer móvil ── */
+    function abrirDrawer() {
+        document.getElementById('drawerNav').classList.add('md-drawer--abierto');
+        document.getElementById('drawerOverlay').style.display = 'block';
+    }
+    function cerrarDrawer() {
+        document.getElementById('drawerNav').classList.remove('md-drawer--abierto');
+        document.getElementById('drawerOverlay').style.display = 'none';
+    }
+    document.getElementById('btnMenuMobile').addEventListener('click', abrirDrawer);
+    document.addEventListener('keydown', function(e) { if (e.key === 'Escape') cerrarDrawer(); });
 
-    // ── Tabs ──
+    /* ── Pestañas ── */
+    var TABS = ['general','proxmox','contenedores','servicios','historial','alertas','claude'];
+
     function cambiarTab(nombre) {
-        // Desactivar todos
-        var tabs = document.querySelectorAll('.medido-tab');
-        var paneles = document.querySelectorAll('.medido-panel');
-        for (var i = 0; i < tabs.length; i++) tabs[i].classList.remove('medido-tab--activo');
-        for (var i = 0; i < paneles.length; i++) paneles[i].classList.remove('medido-panel--activo');
+        TABS.forEach(function(t) {
+            // botón header desktop
+            var b = document.getElementById('tab-btn-' + t);
+            if (b) b.classList.toggle('activo', t === nombre);
+            // tab móvil
+            var tm = document.querySelector('.md-tab[data-tab="' + t + '"]');
+            if (tm) tm.classList.toggle('md-tab--activo', t === nombre);
+            // drawer
+            var d = document.getElementById('drawer-' + t);
+            if (d) d.classList.toggle('md-drawer__item--activo', t === nombre);
+            // panel
+            var p = document.getElementById('panel' + t.charAt(0).toUpperCase() + t.slice(1));
+            if (p) p.classList.toggle('md-panel--activo', t === nombre);
+        });
 
-        // Activar seleccionado
-        var tab = document.querySelector('[data-tab="' + nombre + '"]');
-        if (tab) tab.classList.add('medido-tab--activo');
-        var panel = document.getElementById('panel' + nombre.charAt(0).toUpperCase() + nombre.slice(1));
-        if (panel) panel.classList.add('medido-panel--activo');
-
-        // Cargar datos del panel
-        if (nombre === 'proxmox') cargarProxmox();
+        if (nombre === 'proxmox')      cargarProxmox();
         if (nombre === 'contenedores') cargarContenedores();
-        if (nombre === 'servicios') cargarServicios();
-        if (nombre === 'historial') cargarHistorial();
-        if (nombre === 'alertas') cargarAlertas();
-        if (nombre === 'claude') cargarSesionesClaudeAPI();
+        if (nombre === 'servicios')    cargarServicios();
+        if (nombre === 'historial')    cargarHistorial();
+        if (nombre === 'alertas')      cargarAlertas();
+        if (nombre === 'claude')       cargarSesionesClaudeAPI();
     }
 
-    // ── Helpers ──
-    function colorMetrica(valor) {
-        if (valor > 85) return 'danger';
-        if (valor > 70) return 'warning';
-        return 'ok';
+    document.querySelectorAll('.md-tab').forEach(function(tab) {
+        tab.addEventListener('click', function() { cambiarTab(this.getAttribute('data-tab')); });
+    });
+
+    /* ── Helpers ── */
+    function colorMetrica(v) {
+        return v > 85 ? 'danger' : (v > 70 ? 'warning' : 'ok');
     }
 
     function crearTarjetaMetrica(label, valor, sub) {
         var pct = valor || 0;
         var color = colorMetrica(pct);
-        return '<div class="medido-tarjeta">' +
-            '<div class="medido-tarjeta__label">' + label + '</div>' +
-            '<div class="medido-tarjeta__valor medido-tarjeta__valor--' + color + '">' +
-                (valor !== null ? pct.toFixed(1) + '%' : '--') +
+        return '<div class="md-tarjeta">' +
+            '<div class="md-tarjeta__label">' + label + '</div>' +
+            '<div class="md-tarjeta__valor md-tarjeta__valor--' + color + '">' +
+                (valor !== null && valor !== undefined ? pct.toFixed(1) + '%' : '—') +
             '</div>' +
-            '<div class="medido-barra"><div class="medido-barra__relleno medido-barra__relleno--' + color + '" style="width:' + pct + '%"></div></div>' +
-            (sub ? '<div class="medido-tarjeta__sub">' + sub + '</div>' : '') +
+            '<div class="md-barra"><div class="md-barra__relleno md-barra__relleno--' + color + '" style="width:' + pct + '%"></div></div>' +
+            (sub ? '<div class="md-tarjeta__sub">' + sub + '</div>' : '') +
         '</div>';
     }
 
     function formatearUptime(horas) {
-        if (!horas && horas !== 0) return '--';
-        if (horas < 24) return horas.toFixed(0) + 'h';
-        return (horas / 24).toFixed(0) + 'd';
+        if (!horas && horas !== 0) return '—';
+        return horas < 24 ? horas.toFixed(0) + 'h' : (horas / 24).toFixed(0) + 'd';
     }
 
-    // ── Cargar resumen general ──
+    /* ── General ── */
     function cargarGeneral() {
         fetch(API + '/resumen')
         .then(function(r) { return r.json(); })
         .then(function(d) {
-            // Semaforo
-            var icono = document.getElementById('semaforoIcono');
-            var texto = document.getElementById('semaforoTexto');
-            var detalle = document.getElementById('semaforoDetalle');
-
-            icono.className = 'medido-semaforo__icono medido-semaforo__icono--' + d.estado_global;
-            var iconos = { ok: 'check_circle', warning: 'warning', danger: 'error' };
-            var textos = { ok: 'Todo funciona correctamente', warning: 'Atencion: algo necesita revision', danger: 'Alerta critica' };
-            icono.innerHTML = '<span class="material-symbols-outlined" style="font-size:1.6rem">' + (iconos[d.estado_global] || 'help') + '</span>';
-            texto.textContent = textos[d.estado_global] || 'Desconocido';
-
+            var dot = document.getElementById('semaforoDot');
+            dot.className = 'status-dot status-dot--' + (d.estado_global === 'ok' ? 'ok' : (d.estado_global === 'warning' ? 'warn' : 'danger'));
+            var textos = { ok: 'SISTEMA OK', warning: 'ATENCIÓN: revisar', danger: 'ALERTA CRÍTICA' };
+            document.getElementById('semaforoTexto').textContent = textos[d.estado_global] || 'Desconocido';
             var detalles = [];
             if (d.contenedores_running !== null) detalles.push(d.contenedores_running + '/' + d.contenedores_total + ' contenedores');
             if (d.servicios_total > 0) detalles.push(d.servicios_ok + '/' + d.servicios_total + ' servicios OK');
             if (d.alertas_activas > 0) detalles.push(d.alertas_activas + ' alertas activas');
-            detalle.textContent = detalles.join(' · ');
+            document.getElementById('semaforoDetalle').textContent = detalles.join(' · ');
 
-            // Tarjetas metricas
             var html = '';
             html += crearTarjetaMetrica('CPU Host', d.pve_cpu_percent);
             html += crearTarjetaMetrica('RAM Host', d.pve_memoria_percent);
             html += crearTarjetaMetrica('CPU VM 101', d.vm_cpu_percent);
             html += crearTarjetaMetrica('RAM VM 101', d.vm_memoria_percent);
             html += crearTarjetaMetrica('Disco VM 101', d.vm_disco_percent);
-
-            // Tarjeta de contenedores (texto)
-            html += '<div class="medido-tarjeta">' +
-                '<div class="medido-tarjeta__label">Contenedores</div>' +
-                '<div class="medido-tarjeta__valor medido-tarjeta__valor--ok">' +
-                    (d.contenedores_running || '--') + '/' + (d.contenedores_total || '--') +
+            html += '<div class="md-tarjeta">' +
+                '<div class="md-tarjeta__label">Contenedores</div>' +
+                '<div class="md-tarjeta__valor md-tarjeta__valor--neutral">' +
+                    (d.contenedores_running || '—') + '/' + (d.contenedores_total || '—') +
                 '</div>' +
-                '<div class="medido-tarjeta__sub">running / total</div>' +
+                '<div class="md-tarjeta__sub">running / total</div>' +
             '</div>';
-
             document.getElementById('metricasGeneral').innerHTML = html;
         })
         .catch(function() {
-            document.getElementById('metricasGeneral').innerHTML =
-                '<p class="medido-sin-datos">Error cargando metricas</p>';
+            document.getElementById('metricasGeneral').innerHTML = '<div class="md-tarjeta"><div class="sin-datos">Error cargando métricas</div></div>';
         });
     }
 
-    // ── Cargar Proxmox detallado ──
+    /* ── Proxmox ── */
     function cargarProxmox() {
         fetch(API + '/proxmox')
         .then(function(r) { return r.json(); })
         .then(function(d) {
-            // Host
             var hostHtml = '';
             if (d.host) {
                 hostHtml += crearTarjetaMetrica('CPU', d.host.cpu_percent);
                 hostHtml += crearTarjetaMetrica('RAM', d.host.memoria.percent,
                     d.host.memoria.usado_gb + ' / ' + d.host.memoria.total_gb + ' GB');
-                hostHtml += '<div class="medido-tarjeta">' +
-                    '<div class="medido-tarjeta__label">Uptime</div>' +
-                    '<div class="medido-tarjeta__valor" style="color:var(--primary)">' +
-                        d.host.uptime_dias.toFixed(0) + ' dias</div>' +
+                hostHtml += '<div class="md-tarjeta">' +
+                    '<div class="md-tarjeta__label">Uptime</div>' +
+                    '<div class="md-tarjeta__valor md-tarjeta__valor--neutral">' +
+                        d.host.uptime_dias.toFixed(0) + 'd</div>' +
                 '</div>';
             }
-            document.getElementById('metricasHost').innerHTML = hostHtml || '<p class="medido-sin-datos">Sin datos</p>';
+            document.getElementById('metricasHost').innerHTML = hostHtml || '<div class="sin-datos">Sin datos</div>';
 
-            // VMs
             var vmsHtml = '';
             for (var i = 0; i < d.vms.length; i++) {
                 var vm = d.vms[i];
                 var running = vm.estado === 'running';
-                vmsHtml += '<div class="medido-vm">' +
-                    '<div class="medido-vm__nombre">' +
-                        '<span class="medido-item__estado medido-item__estado--' + (running ? 'running' : 'stopped') + '"></span>' +
-                        vm.nombre + ' (VM ' + vm.vmid + ')' +
+                vmsHtml += '<div class="md-vm">' +
+                    '<div class="md-vm__nombre">' +
+                        '<div class="md-item__dot md-item__dot--' + (running ? 'running' : 'stopped') + '"></div>' +
+                        vm.nombre + ' <span style="font-weight:400;color:var(--ck-on-variant)">(VM ' + vm.vmid + ')</span>' +
                     '</div>';
                 if (running) {
-                    vmsHtml += '<div class="medido-vm__fila"><span>CPU (' + vm.cpus + ' cores)</span><span class="medido-vm__fila-valor">' + vm.cpu_percent.toFixed(1) + '%</span></div>' +
-                        '<div class="medido-barra" style="margin-bottom:0.4rem"><div class="medido-barra__relleno medido-barra__relleno--' + colorMetrica(vm.cpu_percent) + '" style="width:' + vm.cpu_percent + '%"></div></div>' +
-                        '<div class="medido-vm__fila"><span>RAM</span><span class="medido-vm__fila-valor">' + vm.memoria.usado_gb + ' / ' + vm.memoria.total_gb + ' GB (' + vm.memoria.percent.toFixed(1) + '%)</span></div>' +
-                        '<div class="medido-barra" style="margin-bottom:0.4rem"><div class="medido-barra__relleno medido-barra__relleno--' + colorMetrica(vm.memoria.percent) + '" style="width:' + vm.memoria.percent + '%"></div></div>' +
-                        '<div class="medido-vm__fila"><span>Disco</span><span class="medido-vm__fila-valor">' + vm.disco.total_gb + ' GB</span></div>' +
-                        '<div class="medido-vm__fila"><span>Uptime</span><span class="medido-vm__fila-valor">' + vm.uptime_dias.toFixed(0) + ' dias</span></div>';
+                    vmsHtml += '<div class="md-vm__fila"><span>CPU (' + vm.cpus + ' cores)</span><span class="md-vm__val">' + vm.cpu_percent.toFixed(1) + '%</span></div>' +
+                        '<div class="md-barra" style="margin-bottom:0.4rem"><div class="md-barra__relleno md-barra__relleno--' + colorMetrica(vm.cpu_percent) + '" style="width:' + vm.cpu_percent + '%"></div></div>' +
+                        '<div class="md-vm__fila"><span>RAM</span><span class="md-vm__val">' + vm.memoria.usado_gb + ' / ' + vm.memoria.total_gb + ' GB (' + vm.memoria.percent.toFixed(1) + '%)</span></div>' +
+                        '<div class="md-barra" style="margin-bottom:0.4rem"><div class="md-barra__relleno md-barra__relleno--' + colorMetrica(vm.memoria.percent) + '" style="width:' + vm.memoria.percent + '%"></div></div>' +
+                        '<div class="md-vm__fila"><span>Disco</span><span class="md-vm__val">' + vm.disco.total_gb + ' GB</span></div>' +
+                        '<div class="md-vm__fila"><span>Uptime</span><span class="md-vm__val">' + vm.uptime_dias.toFixed(0) + 'd</span></div>';
                 } else {
-                    vmsHtml += '<div class="medido-vm__fila"><span>Estado</span><span class="medido-vm__fila-valor" style="color:var(--peligro)">Parada</span></div>' +
-                        '<div class="medido-vm__fila"><span>Disco</span><span class="medido-vm__fila-valor">' + vm.disco.total_gb + ' GB</span></div>';
+                    vmsHtml += '<div class="md-vm__fila"><span>Estado</span><span class="md-vm__val" style="color:var(--ck-danger)">Parada</span></div>' +
+                        '<div class="md-vm__fila"><span>Disco</span><span class="md-vm__val">' + vm.disco.total_gb + ' GB</span></div>';
                 }
                 vmsHtml += '</div>';
             }
-            document.getElementById('listaVMs').innerHTML = vmsHtml || '<p class="medido-sin-datos">Sin VMs</p>';
+            document.getElementById('listaVMs').innerHTML = vmsHtml || '<div class="sin-datos">Sin VMs</div>';
 
-            // Almacenamiento
             var storHtml = '';
             for (var i = 0; i < d.almacenamiento.length; i++) {
                 var s = d.almacenamiento[i];
                 var color = colorMetrica(s.percent);
-                storHtml += '<div class="medido-storage-item">' +
-                    '<div class="medido-storage-item__nombre">' + s.nombre + '</div>' +
-                    '<div class="medido-tarjeta__valor medido-tarjeta__valor--' + color + '" style="font-size:1.2rem">' + s.percent.toFixed(1) + '%</div>' +
-                    '<div class="medido-barra"><div class="medido-barra__relleno medido-barra__relleno--' + color + '" style="width:' + s.percent + '%"></div></div>' +
-                    '<div class="medido-storage-item__info">' + s.usado_gb + ' / ' + s.total_gb + ' GB — ' + s.tipo + '</div>' +
+                storHtml += '<div class="md-storage-item">' +
+                    '<div class="md-storage-item__nombre">' + s.nombre + '</div>' +
+                    '<div class="md-tarjeta__valor md-tarjeta__valor--' + color + '" style="font-size:1.2rem;margin-bottom:0.35rem">' + s.percent.toFixed(1) + '%</div>' +
+                    '<div class="md-barra"><div class="md-barra__relleno md-barra__relleno--' + color + '" style="width:' + s.percent + '%"></div></div>' +
+                    '<div class="md-storage-item__info">' + s.usado_gb + ' / ' + s.total_gb + ' GB — ' + s.tipo + '</div>' +
                 '</div>';
             }
-            document.getElementById('listaStorage').innerHTML = storHtml || '<p class="medido-sin-datos">Sin almacenamiento</p>';
+            document.getElementById('listaStorage').innerHTML = storHtml || '<div class="sin-datos">Sin datos</div>';
         })
         .catch(function() {
-            document.getElementById('metricasHost').innerHTML = '<p class="medido-sin-datos">Error</p>';
+            document.getElementById('metricasHost').innerHTML = '<div class="sin-datos">Error</div>';
         });
     }
 
-    // ── Cargar contenedores ──
+    /* ── Contenedores ── */
     function cargarContenedores() {
         fetch(API + '/contenedores')
         .then(function(r) { return r.json(); })
         .then(function(d) {
             document.getElementById('conteoContenedores').textContent =
                 '(' + d.running + '/' + d.total + ' running)';
-
             var html = '';
             for (var i = 0; i < d.contenedores.length; i++) {
                 var c = d.contenedores[i];
-                var det = c.estado;
-                if (c.uptime_horas !== null) det = formatearUptime(c.uptime_horas) + ' uptime';
-                html += '<div class="medido-item">' +
-                    '<div class="medido-item__estado medido-item__estado--' + c.estado + '"></div>' +
-                    '<div class="medido-item__nombre">' + c.nombre + '</div>' +
-                    '<div class="medido-item__detalle">' + det + '</div>' +
+                var det = c.uptime_horas !== null ? formatearUptime(c.uptime_horas) + ' uptime' : c.estado;
+                html += '<div class="md-item">' +
+                    '<div class="md-item__dot md-item__dot--' + c.estado + '"></div>' +
+                    '<div class="md-item__nombre">' + c.nombre + '</div>' +
+                    '<div class="md-item__detalle">' + det + '</div>' +
                 '</div>';
             }
-            document.getElementById('listaContenedores').innerHTML = html || '<p class="medido-sin-datos">Sin contenedores</p>';
+            document.getElementById('listaContenedores').innerHTML = html || '<div class="sin-datos">Sin contenedores</div>';
         })
         .catch(function() {
-            document.getElementById('listaContenedores').innerHTML = '<p class="medido-sin-datos">Error</p>';
+            document.getElementById('listaContenedores').innerHTML = '<div class="sin-datos">Error</div>';
         });
     }
 
-    // ── Cargar servicios ──
+    /* ── Servicios ── */
     function cargarServicios() {
         fetch(API + '/servicios')
         .then(function(r) { return r.json(); })
@@ -850,133 +769,120 @@
             var html = '';
             for (var i = 0; i < d.servicios.length; i++) {
                 var s = d.servicios[i];
-                var det = s.tiempo_respuesta_ms !== null ? s.tiempo_respuesta_ms + 'ms' : '--';
-                if (s.mensaje) det = s.mensaje;
-                html += '<div class="medido-item">' +
-                    '<div class="medido-item__estado medido-item__estado--' + s.estado + '"></div>' +
-                    '<div class="medido-item__nombre">' + s.servicio + '</div>' +
-                    '<div class="medido-item__detalle">' + det + '</div>' +
+                var det = s.mensaje || (s.tiempo_respuesta_ms !== null ? s.tiempo_respuesta_ms + 'ms' : '—');
+                html += '<div class="md-item">' +
+                    '<div class="md-item__dot md-item__dot--' + s.estado + '"></div>' +
+                    '<div class="md-item__nombre">' + s.servicio + '</div>' +
+                    '<div class="md-item__detalle">' + det + '</div>' +
                 '</div>';
             }
-            document.getElementById('listaServicios').innerHTML = html || '<p class="medido-sin-datos">Sin datos</p>';
+            document.getElementById('listaServicios').innerHTML = html || '<div class="sin-datos">Sin datos</div>';
         })
         .catch(function() {
-            document.getElementById('listaServicios').innerHTML = '<p class="medido-sin-datos">Error</p>';
+            document.getElementById('listaServicios').innerHTML = '<div class="sin-datos">Error</div>';
         });
     }
 
-    // ── Cargar historial (grafica canvas) ──
+    /* ── Historial (canvas) ── */
     function cargarHistorial() {
         fetch(API + '/proxmox/historial?horas=24')
         .then(function(r) { return r.json(); })
-        .then(function(d) {
-            dibujarGrafica(d.puntos);
-        })
+        .then(function(d) { dibujarGrafica(d.puntos); })
         .catch(function() {});
     }
 
     function dibujarGrafica(puntos) {
         var canvas = document.getElementById('graficaHistorial');
-        if (!canvas || !puntos || puntos.length === 0) return;
+        if (!canvas || !puntos || !puntos.length) return;
 
         var ctx = canvas.getContext('2d');
         var rect = canvas.parentElement.getBoundingClientRect();
         canvas.width = rect.width - 40;
         canvas.height = 200;
 
-        var w = canvas.width;
-        var h = canvas.height;
-        var margen = { top: 10, right: 10, bottom: 25, left: 35 };
-        var areaW = w - margen.left - margen.right;
-        var areaH = h - margen.top - margen.bottom;
+        var w = canvas.width, h = canvas.height;
+        var mg = { top: 10, right: 10, bottom: 25, left: 35 };
+        var areaW = w - mg.left - mg.right;
+        var areaH = h - mg.top - mg.bottom;
 
         ctx.clearRect(0, 0, w, h);
 
-        // Lineas de referencia
-        ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--surface-container') || '#e0e0e0';
+        var gridColor = 'rgba(128,128,128,0.1)';
+        var labelColor = getComputedStyle(document.documentElement).getPropertyValue('--ck-on-variant').trim() || '#3a6058';
+
+        ctx.strokeStyle = gridColor;
         ctx.lineWidth = 1;
         for (var p = 0; p <= 100; p += 25) {
-            var y = margen.top + areaH - (p / 100 * areaH);
-            ctx.beginPath();
-            ctx.moveTo(margen.left, y);
-            ctx.lineTo(margen.left + areaW, y);
-            ctx.stroke();
-            // Labels
-            ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--on-surface-variant') || '#888';
-            ctx.font = '10px sans-serif';
+            var y = mg.top + areaH - (p / 100 * areaH);
+            ctx.beginPath(); ctx.moveTo(mg.left, y); ctx.lineTo(mg.left + areaW, y); ctx.stroke();
+            ctx.fillStyle = labelColor;
+            ctx.font = '9px monospace';
             ctx.textAlign = 'right';
-            ctx.fillText(p + '%', margen.left - 5, y + 3);
+            ctx.fillText(p + '%', mg.left - 4, y + 3);
         }
 
-        // Series
         var series = [
-            { campo: 'pve_cpu_percent', color: '#26a69a' },
+            { campo: 'pve_cpu_percent',    color: '#26a69a' },
             { campo: 'pve_memoria_percent', color: '#ef5350' },
-            { campo: 'vm_cpu_percent', color: '#42a5f5' },
-            { campo: 'vm_memoria_percent', color: '#ffa726' },
+            { campo: 'vm_cpu_percent',      color: '#42a5f5' },
+            { campo: 'vm_memoria_percent',  color: '#ffa726' },
         ];
 
         for (var s = 0; s < series.length; s++) {
             ctx.beginPath();
             ctx.strokeStyle = series[s].color;
-            ctx.lineWidth = 2;
-
+            ctx.lineWidth = 1.5;
             var primera = true;
             for (var i = 0; i < puntos.length; i++) {
                 var val = puntos[i][series[s].campo];
                 if (val === null || val === undefined) continue;
-                var x = margen.left + (i / (puntos.length - 1)) * areaW;
-                var y = margen.top + areaH - (val / 100 * areaH);
-                if (primera) { ctx.moveTo(x, y); primera = false; }
-                else ctx.lineTo(x, y);
+                var x = mg.left + (i / (puntos.length - 1)) * areaW;
+                var y2 = mg.top + areaH - (val / 100 * areaH);
+                if (primera) { ctx.moveTo(x, y2); primera = false; }
+                else ctx.lineTo(x, y2);
             }
             ctx.stroke();
         }
 
-        // Etiquetas de tiempo
         if (puntos.length > 1) {
-            ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--on-surface-variant') || '#888';
-            ctx.font = '10px sans-serif';
+            ctx.fillStyle = labelColor;
+            ctx.font = '9px monospace';
             ctx.textAlign = 'center';
             var step = Math.max(1, Math.floor(puntos.length / 6));
             for (var i = 0; i < puntos.length; i += step) {
-                var fecha = puntos[i].fecha || '';
-                var hora = fecha.split(' ')[1] || '';
-                if (hora) hora = hora.substring(0, 5);
-                var x = margen.left + (i / (puntos.length - 1)) * areaW;
-                ctx.fillText(hora, x, h - 5);
+                var hora = ((puntos[i].fecha || '').split(' ')[1] || '').substring(0, 5);
+                if (hora) {
+                    var x2 = mg.left + (i / (puntos.length - 1)) * areaW;
+                    ctx.fillText(hora, x2, h - 5);
+                }
             }
         }
     }
 
-    // ── Cargar alertas ──
+    /* ── Alertas ── */
     function cargarAlertas() {
         fetch(API + '/alertas')
         .then(function(r) { return r.json(); })
         .then(function(d) {
-            if (!d.alertas || d.alertas.length === 0) {
-                document.getElementById('listaAlertas').innerHTML =
-                    '<p class="medido-sin-datos">Sin alertas</p>';
+            if (!d.alertas || !d.alertas.length) {
+                document.getElementById('listaAlertas').innerHTML = '<p class="sin-datos">Sin alertas</p>';
                 return;
             }
-
             var html = '';
             for (var i = 0; i < d.alertas.length; i++) {
                 var a = d.alertas[i];
-                var clase = a.resuelta ? ' medido-alerta--resuelta' : '';
-                html += '<div class="medido-alerta' + clase + '">' +
-                    '<div class="medido-alerta__texto">' + a.mensaje + '</div>' +
-                    '<div class="medido-alerta__fecha">' + (a.fecha || '').replace('T', ' ') + '</div>';
+                html += '<div class="md-alerta' + (a.resuelta ? ' md-alerta--resuelta' : '') + '">' +
+                    '<div class="md-alerta__texto">' + a.mensaje + '</div>' +
+                    '<div class="md-alerta__fecha">' + (a.fecha || '').replace('T', ' ') + '</div>';
                 if (!a.resuelta) {
-                    html += '<button class="medido-alerta__btn" onclick="resolverAlerta(' + a.id + ')">Resolver</button>';
+                    html += '<button class="md-alerta__btn" onclick="resolverAlerta(' + a.id + ')">RESOLVER</button>';
                 }
                 html += '</div>';
             }
             document.getElementById('listaAlertas').innerHTML = html;
         })
         .catch(function() {
-            document.getElementById('listaAlertas').innerHTML =
-                '<p class="medido-sin-datos">Error cargando alertas</p>';
+            document.getElementById('listaAlertas').innerHTML = '<p class="sin-datos">Error cargando alertas</p>';
         });
     }
 
@@ -986,27 +892,18 @@
         .catch(function() {});
     }
 
-    // ── Claude Code ──
-
+    /* ── Claude Code ── */
     function cargarProyectosClaude() {
         var periodo = document.getElementById('filtroPeriodo').value;
-        var url = API + '/claude/sesiones?periodo=' + periodo;
-
-        fetch(url)
+        fetch(API + '/claude/sesiones?periodo=' + periodo)
         .then(function(r) { return r.json(); })
         .then(function(data) {
-            var selectProyecto = document.getElementById('filtroProyecto');
-            var proyectos = data.proyectos_unicos || [];
-
-            // Mantener opción "Todos"
-            selectProyecto.innerHTML = '<option value="">Proyecto: Todos</option>';
-
-            // Agregar cada proyecto
-            proyectos.forEach(function(p) {
+            var sel = document.getElementById('filtroProyecto');
+            sel.innerHTML = '<option value="">Proyecto: Todos</option>';
+            (data.proyectos_unicos || []).forEach(function(p) {
                 var opt = document.createElement('option');
-                opt.value = p;
-                opt.textContent = p;
-                selectProyecto.appendChild(opt);
+                opt.value = p; opt.textContent = p;
+                sel.appendChild(opt);
             });
         });
     }
@@ -1014,19 +911,17 @@
     function cargarSesionesClaudeAPI() {
         var periodo = document.getElementById('filtroPeriodo').value;
         var proyecto = document.getElementById('filtroProyecto').value;
-
         var url = API + '/claude/sesiones?periodo=' + periodo;
         if (proyecto) url += '&proyecto=' + encodeURIComponent(proyecto);
 
         fetch(url)
         .then(function(r) { return r.json(); })
         .then(function(data) {
-            // Renderizar tabla
             var tbody = document.getElementById('tablaSesionesClaudeAPI');
             var sesiones = data.sesiones || [];
 
-            if (sesiones.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" class="medido-sin-datos">Sin sesiones en este período</td></tr>';
+            if (!sesiones.length) {
+                tbody.innerHTML = '<tr><td colspan="8" class="sin-datos">Sin sesiones en este período</td></tr>';
             } else {
                 tbody.innerHTML = sesiones.map(function(s) {
                     var fecha = new Date(s.fecha_fin);
@@ -1035,47 +930,43 @@
                     var cacheTok = s.cache_read_tokens + s.cache_creation_tokens;
                     var sid = s.session_id;
 
-                    var celdaNum = s.num_respuestas > 1
+                    var numCell = s.num_respuestas > 1
                         ? '<td style="white-space:nowrap">' +
-                              '<button class="hogar-boton" id="btn-expand-' + sid + '" ' +
-                                  'onclick="expandirSesion(\'' + sid + '\')" ' +
-                                  'style="padding:2px 6px; margin-right:4px;" title="Ver respuestas">' +
-                                  '<span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle">expand_more</span>' +
-                              '</button>' + s.num_respuestas +
+                              '<button class="md-expand-btn" id="btn-expand-' + sid + '" ' +
+                                  'onclick="expandirSesion(\'' + sid + '\')" title="Ver respuestas">' +
+                                  '<span class="material-symbols-outlined" style="font-size:0.85rem;vertical-align:middle">expand_more</span>' +
+                              '</button> ' + s.num_respuestas +
                           '</td>'
                         : '<td>' + s.num_respuestas + '</td>';
 
                     return '<tr id="fila-' + sid + '">' +
-                        celdaNum +
+                        numCell +
                         '<td>' + fechaStr + ' ' + horaStr + '</td>' +
-                        '<td>' + s.proyecto + '</td>' +
+                        '<td style="color:var(--ck-on-surface)">' + s.proyecto + '</td>' +
                         '<td>' + s.input_tokens.toLocaleString() + '</td>' +
                         '<td>' + s.output_tokens.toLocaleString() + '</td>' +
                         '<td>' + cacheTok.toLocaleString() + '</td>' +
-                        '<td>$' + s.coste_total_usd.toFixed(4) + '</td>' +
-                        '<td><button class="hogar-boton hogar-boton--peligro" style="padding: 4px 8px;" ' +
-                            'onclick="eliminarSesionClaude(\'' + sid + '\')" title="Eliminar sesión">' +
+                        '<td style="color:var(--ck-accent)">$' + s.coste_total_usd.toFixed(4) + '</td>' +
+                        '<td><button class="md-del-btn" onclick="eliminarSesionClaude(\'' + sid + '\')" title="Eliminar">' +
                             '<span class="material-symbols-outlined">delete</span>' +
                         '</button></td>' +
                     '</tr>' +
                     '<tr style="display:none" id="detalle-' + sid + '">' +
-                        '<td colspan="8" style="padding: 0 8px 8px 32px; background: var(--surface-container-lowest);"></td>' +
+                        '<td colspan="8" style="padding:0;background:var(--ck-bg3)"></td>' +
                     '</tr>';
                 }).join('');
             }
 
-            // Actualizar sumas
             document.getElementById('sumaSesiones').textContent = data.totales.sesiones_count;
             document.getElementById('sumaTokens').textContent = data.totales.tokens_total.toLocaleString();
             document.getElementById('sumaCoste').textContent = '$' + data.totales.coste_total_usd.toFixed(4);
 
-            // Actualizar dropdown de proyectos
             cargarProyectosClaude();
         })
         .catch(function(err) {
             console.error('Error cargando sesiones Claude:', err);
             document.getElementById('tablaSesionesClaudeAPI').innerHTML =
-                '<tr><td colspan="8" class="medido-sin-datos">Error cargando datos</td></tr>';
+                '<tr><td colspan="8" class="sin-datos">Error cargando datos</td></tr>';
         });
     }
 
@@ -1084,14 +975,11 @@
         var btn = document.getElementById('btn-expand-' + sessionId);
         var icono = btn ? btn.querySelector('.material-symbols-outlined') : null;
 
-        // Si ya está expandido, colapsar
         if (filaDetalle.style.display !== 'none') {
             filaDetalle.style.display = 'none';
             if (icono) icono.textContent = 'expand_more';
             return;
         }
-
-        // Si ya tiene contenido cargado, solo mostrar
         var celda = filaDetalle.querySelector('td');
         if (celda && celda.querySelector('table')) {
             filaDetalle.style.display = '';
@@ -1099,37 +987,32 @@
             return;
         }
 
-        // Primera vez: cargar desde API y renderizar
         fetch(API + '/claude/sesiones/' + encodeURIComponent(sessionId))
         .then(function(r) { return r.json(); })
         .then(function(data) {
             var filas = data.respuestas.map(function(r, i) {
-                var hora = new Date(r.fecha_fin).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit', second: '2-digit'});
+                var hora = new Date(r.fecha_fin).toLocaleTimeString('es-ES', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
                 var cache = r.cache_read_tokens + r.cache_creation_tokens;
-                return '<tr>' +
-                    '<td>' + (i + 1) + '</td>' +
+                return '<tr class="sub-tabla">' +
+                    '<td>' + (i+1) + '</td>' +
                     '<td>' + hora + '</td>' +
+                    '<td></td>' +
                     '<td>' + r.input_tokens.toLocaleString() + '</td>' +
                     '<td>' + r.output_tokens.toLocaleString() + '</td>' +
                     '<td>' + cache.toLocaleString() + '</td>' +
                     '<td>$' + r.coste_total_usd.toFixed(4) + '</td>' +
+                    '<td></td>' +
                 '</tr>';
             }).join('');
 
-            celda.innerHTML =
-                '<table class="hogar-tabla" style="font-size:0.85em; margin: 4px 0;">' +
-                    '<thead><tr>' +
-                        '<th>#</th><th>Hora</th><th>Input Tok</th><th>Output Tok</th><th>Cache Tok</th><th>Coste USD</th>' +
-                    '</tr></thead>' +
-                    '<tbody>' + filas + '</tbody>' +
-                '</table>';
+            celda.innerHTML = '<table class="md-tabla" style="font-size:0.85em">' +
+                '<thead><tr><th>#</th><th>Hora</th><th></th><th>Input</th><th>Output</th><th>Cache</th><th>Coste</th><th></th></tr></thead>' +
+                '<tbody>' + filas + '</tbody></table>';
 
             filaDetalle.style.display = '';
             if (icono) icono.textContent = 'expand_less';
         })
-        .catch(function(err) {
-            console.error('Error cargando detalle de sesión:', err);
-        });
+        .catch(function(err) { console.error('Error cargando detalle de sesión:', err); });
     }
 
     function eliminarSesionClaude(sessionId) {
@@ -1139,28 +1022,23 @@
             if (!r.ok) throw new Error('Error ' + r.status);
             cargarSesionesClaudeAPI();
         })
-        .catch(function(err) {
-            alert('Error al eliminar la sesión: ' + err.message);
-        });
+        .catch(function(err) { alert('Error al eliminar la sesión: ' + err.message); });
     }
 
-    // ── Inicializacion ──
+    /* ── Inicialización ── */
     cargarGeneral();
 
-    // Refresco automatico cada 60 segundos
     setInterval(function() {
         cargarGeneral();
-        // Refrescar el panel activo
-        var activo = document.querySelector('.medido-tab--activo');
-        if (activo) {
-            var tab = activo.getAttribute('data-tab');
-            if (tab === 'proxmox') cargarProxmox();
-            if (tab === 'contenedores') cargarContenedores();
-            if (tab === 'servicios') cargarServicios();
-            if (tab === 'historial') cargarHistorial();
-            if (tab === 'alertas') cargarAlertas();
-            if (tab === 'claude') cargarSesionesClaudeAPI();
-        }
+        var activo = document.querySelector('.md-tab--activo') ||
+                     document.querySelector('.ck-nav button.activo[id^="tab-btn-"]');
+        var tab = activo ? (activo.getAttribute('data-tab') || activo.id.replace('tab-btn-', '')) : 'general';
+        if (tab === 'proxmox')      cargarProxmox();
+        if (tab === 'contenedores') cargarContenedores();
+        if (tab === 'servicios')    cargarServicios();
+        if (tab === 'historial')    cargarHistorial();
+        if (tab === 'alertas')      cargarAlertas();
+        if (tab === 'claude')       cargarSesionesClaudeAPI();
     }, 60000);
     </script>
 </body>
