@@ -7,13 +7,16 @@
     <link rel="stylesheet" href="/static/hogar.css">
     <style>
         /* ── Reset base ── */
-        html { font-size: 150%; }
+        html { font-size: 150%; }                                          /* monitores ≥1301px */
+        @media (max-width: 1300px) { html { font-size: 125%; } }          /* portátiles */
+        @media (max-width: 900px)  { html { font-size: 100%; } }          /* tablet/móvil */
 
         body {
             background: var(--ck-bg);
             color: var(--ck-on-surface);
             font-family: var(--ck-fuente);
             margin: 0; min-height: 100vh;
+            overflow-x: hidden;
         }
         .md-main { max-width: 1400px; margin: 0 auto; padding: 1rem 1.5rem 2rem; }
 
