@@ -74,6 +74,8 @@
             display: flex; border-bottom: 1px solid var(--ck-line);
             margin-bottom: 1.25rem; flex-wrap: wrap;
         }
+        .md-tabs.md-mobile-only { display: none; }
+        @media (max-width: 900px) { .md-tabs.md-mobile-only { display: flex; } }
         .md-tab {
             background: none; border: none;
             font-family: var(--ck-fuente); font-size: 0.62rem; font-weight: 700;
