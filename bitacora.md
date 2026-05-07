@@ -1,5 +1,12 @@
 # Bitácora — MediDo
 
+## 2026-05-07 — Mejoras responsive
+
+### `static/index.html` — Font-size adaptativo y overflow
+
+- `html { font-size }` cambiado de fijo `150%` a tres escalones: `150%` (≥1301px), `125%` (portátiles ≤1300px), `100%` (tablet/móvil ≤900px). Alineado con el resto del ecosistema.
+- `overflow-x: hidden` añadido al `body` para evitar scroll horizontal en móvil.
+
 ## 2026-05-05
 
 ### Fase 15 Paso 5 — Rediseño Cockpit completo
