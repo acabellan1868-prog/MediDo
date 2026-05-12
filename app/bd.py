@@ -19,12 +19,26 @@ def obtener_conexion() -> sqlite3.Connection:
 
 
 def migrar_bd():
-    """Aplica migraciones de esquema sobre una BD ya existente.
-
-    Migración 1: eliminar UNIQUE de session_id en tracking_claude para permitir
-    múltiples entradas por sesión (una por respuesta de Claude Code).
-    """
+    """Aplica migraciones de esquema sobre una BD ya existente."""
     conexion = obtener_conexion()
+
+    # Migración: añadir silenciada_hasta a alertas
+    tablas = {
+        fila[0]
+        for fila in conexion.execute(
+            "SELECT name FROM sqlite_master WHERE type='table'"
+        ).fetchall()
+    }
+    if "alertas" in tablas:
+        columnas = {
+            fila[1]
+            for fila in conexion.execute("PRAGMA table_info(alertas)").fetchall()
+        }
+        if "silenciada_hasta" not in columnas:
+            conexion.execute(
+                "ALTER TABLE alertas ADD COLUMN silenciada_hasta TEXT"
+            )
+            conexion.commit()
     fila = conexion.execute(
         "SELECT sql FROM sqlite_master WHERE type='table' AND name='tracking_claude'"
     ).fetchone()

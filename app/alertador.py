@@ -48,14 +48,26 @@ def _crear_alerta(tipo: str, mensaje: str, servicio: str = None, notificar: bool
     """Crea una alerta en BD y opcionalmente la envia por NTFY."""
     from app import bd
 
-    # No duplicar alertas activas del mismo tipo y servicio
+    # No duplicar alertas activas del mismo tipo y servicio en la última hora
     existente = bd.consultar_uno(
         """SELECT id FROM alertas
            WHERE tipo = ? AND servicio IS ? AND resuelta = 0
+           AND (silenciada_hasta IS NULL OR silenciada_hasta < datetime('now'))
            AND fecha > datetime('now', '-1 hour')""",
         (tipo, servicio),
     )
     if existente:
+        return
+
+    # No crear nueva alerta si hay una silenciada activa del mismo tipo y servicio
+    silenciada = bd.consultar_uno(
+        """SELECT id FROM alertas
+           WHERE tipo = ? AND servicio IS ? AND resuelta = 0
+           AND silenciada_hasta IS NOT NULL
+           AND (silenciada_hasta = '9999-12-31' OR silenciada_hasta > datetime('now'))""",
+        (tipo, servicio),
+    )
+    if silenciada:
         return
 
     bd.ejecutar(
