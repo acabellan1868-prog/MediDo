@@ -1,0 +1,1443 @@
+/*
+ * hogar.css — Design System de hogarOS
+ * Estilo: Living Sanctuary
+ * Paleta: Teal + Pasteles · Tipografía: Plus Jakarta Sans / Be Vietnam Pro
+ *
+ * Todas las apps del ecosistema (hogarOS, ReDo, FiDo, futuras)
+ * cargan este fichero para mantener coherencia visual.
+ *
+ * Uso: <link rel="stylesheet" href="/static/hogar.css">
+ * Requiere: Tailwind CDN + Google Fonts (Plus Jakarta Sans, Be Vietnam Pro, Material Symbols)
+ */
+
+/* ============================================================
+   1. Google Fonts — se cargan aquí para que todas las apps
+      solo necesiten importar hogar.css
+   ============================================================ */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Be+Vietnam+Pro:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap');
+
+/* ============================================================
+   2. Variables CSS — Modo claro (por defecto)
+   ============================================================ */
+:root {
+  /* --- Paleta Living Sanctuary --- */
+  --primary:               #1a6a60;
+  --primary-dim:           #025e54;
+  --primary-container:     #a4eee0;
+  --on-primary:            #e2fff8;
+  --on-primary-container:  #005b51;
+
+  --secondary:             #535b93;
+  --secondary-dim:         #474f86;
+  --secondary-container:   #dfe0ff;
+  --on-secondary-container:#454e85;
+
+  --tertiary:              #76575f;
+  --tertiary-dim:          #694b53;
+  --tertiary-container:    #fed5df;
+  --on-tertiary-container: #654850;
+
+  --error:                 #a83836;
+  --error-container:       #fa746f;
+  --on-error:              #fff7f6;
+
+  --background:            #f8f9fa;
+  --surface:               #f8f9fa;
+  --surface-dim:           #d5dbdd;
+  --surface-container-lowest: #ffffff;
+  --surface-container-low: #f1f4f5;
+  --surface-container:     #ebeef0;
+  --surface-container-high:#e5e9eb;
+  --surface-container-highest:#dee3e6;
+
+  --on-surface:            #2d3335;
+  --on-surface-variant:    #5a6062;
+  --outline:               #767c7e;
+  --outline-variant:       #adb3b5;
+
+  /* --- Semánticos --- */
+  --exito:                 #2e7d32;
+  --exito-fondo:           #e8f5e9;
+  --aviso:                 #e67e22;
+  --aviso-fondo:           #fff3e0;
+  --peligro:               #c62828;
+  --peligro-fondo:         #ffebee;
+
+  /* --- Tipografía --- */
+  --fuente-titular:  'Plus Jakarta Sans', system-ui, sans-serif;
+  --fuente-cuerpo:   'Be Vietnam Pro', system-ui, sans-serif;
+  --fuente-mono:     'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+
+  /* --- Bordes (redondeados orgánicos) --- */
+  --radio-sm:  0.75rem;
+  --radio-md:  1rem;
+  --radio-lg:  1.5rem;
+  --radio-xl:  2rem;
+  --radio-2xl: 2.5rem;
+  --radio-3xl: 3rem;
+  --radio-full:9999px;
+
+  /* --- Espaciado --- */
+  --gap-xs: 0.25rem;
+  --gap-sm: 0.5rem;
+  --gap-md: 1rem;
+  --gap-lg: 1.5rem;
+  --gap-xl: 2rem;
+  --gap-2xl: 3rem;
+  --gap-3xl: 4rem;
+
+  /* --- Sombras ambient (sin heavy shadows) --- */
+  --sombra-sm:    0 4px 12px rgba(0, 0, 0, 0.04);
+  --sombra-md:    0 15px 30px rgba(0, 0, 0, 0.04);
+  --sombra-lg:    0 30px 60px rgba(0, 0, 0, 0.06);
+  --sombra-float: 0 20px 50px rgba(0, 0, 0, 0.06);
+
+  /* --- Transiciones --- */
+  --transicion:       0.3s ease;
+  --transicion-lenta: 0.7s ease;
+
+  /* --- Glass --- */
+  --glass-bg:     rgba(255, 255, 255, 0.20);
+  --glass-border: rgba(255, 255, 255, 0.30);
+  --glass-blur:   16px;
+}
+
+/* ============================================================
+   3. Variables CSS — Modo oscuro
+   ============================================================ */
+[data-tema="oscuro"] {
+  --primary:               #a4eee0;
+  --primary-dim:           #96dfd2;
+  --primary-container:     #11655a;
+  --on-primary:            #003830;
+  --on-primary-container:  #c0fff4;
+
+  --secondary:             #cdd1ff;
+  --secondary-dim:         #b8bcf0;
+  --secondary-container:   #3b4378;
+  --on-secondary-container:#e8e9ff;
+
+  --tertiary:              #efc7d1;
+  --tertiary-dim:          #ddb5bf;
+  --tertiary-container:    #5a3f47;
+  --on-tertiary-container: #ffe1e8;
+
+  --error:                 #ffb4ab;
+  --error-container:       #93000a;
+  --on-error:              #690005;
+
+  --background:            #0e1112;
+  --surface:               #0e1112;
+  --surface-dim:           #0e1112;
+  --surface-container-lowest: #090b0c;
+  --surface-container-low: #1a1d1e;
+  --surface-container:     #1e2122;
+  --surface-container-high:#282b2c;
+  --surface-container-highest:#333637;
+
+  --on-surface:            #dee3e5;
+  --on-surface-variant:    #c0c7c9;
+  --outline:               #8a9193;
+  --outline-variant:       #404849;
+
+  --exito:                 #81c784;
+  --exito-fondo:           #1b3a1b;
+  --aviso:                 #ffb74d;
+  --aviso-fondo:           #3d2a0f;
+  --peligro:               #ef9a9a;
+  --peligro-fondo:         #3d1515;
+
+  --sombra-sm:    0 4px 12px rgba(0, 0, 0, 0.20);
+  --sombra-md:    0 15px 30px rgba(0, 0, 0, 0.25);
+  --sombra-lg:    0 30px 60px rgba(0, 0, 0, 0.35);
+  --sombra-float: 0 20px 50px rgba(0, 0, 0, 0.30);
+
+  --glass-bg:     rgba(14, 17, 18, 0.60);
+  --glass-border: rgba(255, 255, 255, 0.08);
+}
+
+/* ============================================================
+   4. Reset y base
+   ============================================================ */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--fuente-cuerpo);
+  background: var(--background);
+  color: var(--on-surface);
+  line-height: 1.5;
+  min-height: 100vh;
+  transition: background var(--transicion), color var(--transicion);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--primary-container);
+  color: var(--on-primary-container);
+}
+
+/* ============================================================
+   5. Tipografía
+   ============================================================ */
+.fuente-titular {
+  font-family: var(--fuente-titular);
+}
+
+.fuente-cuerpo {
+  font-family: var(--fuente-cuerpo);
+}
+
+/* ============================================================
+   6. Material Symbols — config base
+   ============================================================ */
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+.material-symbols-outlined.filled {
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+/* ============================================================
+   7. Header flotante glassmorphic
+   ============================================================ */
+.hogar-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  padding: 0.5rem 1rem;
+}
+
+.hogar-header__barra {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1.5rem;
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: var(--radio-2xl);
+  box-shadow: var(--sombra-float);
+  border: 1px solid var(--glass-border);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.hogar-header__marca {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-decoration: none;
+  color: inherit;
+}
+
+.hogar-header__icono-marca {
+  color: var(--primary);
+  font-size: 1.5rem;
+}
+
+[data-tema="oscuro"] .hogar-header__icono-marca {
+  color: var(--primary);
+}
+
+.hogar-header__titulo {
+  font-family: var(--fuente-titular);
+  font-size: 1.25rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--primary-dim), var(--primary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+[data-tema="oscuro"] .hogar-header__titulo {
+  background: linear-gradient(135deg, var(--primary-dim), var(--primary));
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+.hogar-header__subtitulo {
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--on-surface-variant);
+  font-weight: 700;
+  opacity: 0.6;
+}
+
+/* Botón hamburguesa / menú */
+.hogar-header__menu-btn {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--radio-full);
+  border: 1px solid var(--glass-border);
+  background: var(--surface-container-high);
+  color: var(--on-surface-variant);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--transicion), transform var(--transicion);
+  flex-shrink: 0;
+}
+
+.hogar-header__menu-btn:hover {
+  background: var(--surface-container);
+  color: var(--on-surface);
+}
+
+.hogar-header__menu-btn:active {
+  transform: scale(0.92);
+}
+
+/* Overlay para cerrar drawer */
+.hogar-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 150;
+  transition: opacity 0.3s ease;
+}
+
+.hogar-drawer-overlay.oculto {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ============================================================
+   7b. Header unificado para todas las aplicaciones
+   ============================================================ */
+.hogar-header-app {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 60px;
+  padding: 0 2rem;
+  background: var(--surface-container-lowest);
+  border-bottom: 1px solid var(--surface-container-high);
+  flex-shrink: 0;
+  z-index: 100;
+}
+
+.hogar-header-app__left {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.hogar-header-app__right {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-shrink: 0;
+}
+
+.hogar-header-app__marca {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  font-weight: 700;
+  font-family: var(--fuente-titular);
+  white-space: nowrap;
+}
+
+.hogar-header-app__marca-icon {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.hogar-header-app__marca-text {
+  font-size: 0.95rem;
+  letter-spacing: -0.01em;
+}
+
+.hogar-header-app__sep {
+  width: 1px;
+  height: 24px;
+  background: var(--surface-container);
+  flex-shrink: 0;
+}
+
+.hogar-header-app__app {
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--primary);
+  flex-shrink: 0;
+  font-family: var(--fuente-titular);
+}
+
+.hogar-header-app__sub {
+  font-size: 0.75rem;
+  color: var(--on-surface-variant);
+  flex-shrink: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.hogar-header-app__nav {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.hogar-header-app__nav-btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: var(--radio-lg);
+  background: transparent;
+  color: var(--on-surface-variant);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: background var(--transicion), color var(--transicion);
+  font-family: var(--fuente-cuerpo);
+}
+
+.hogar-header-app__nav-btn:hover {
+  background: var(--surface-container);
+  color: var(--on-surface);
+}
+
+.hogar-header-app__nav-btn--activo {
+  background: var(--surface-container-high);
+  color: var(--on-surface);
+  font-weight: 700;
+}
+
+.hogar-header-app__clock {
+  font-size: 0.8rem;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--on-surface-variant);
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.hogar-header-app__btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radio-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--on-surface-variant);
+  transition: background var(--transicion), color var(--transicion);
+  flex-shrink: 0;
+}
+
+.hogar-header-app__btn:hover {
+  background: var(--surface-container);
+  color: var(--on-surface);
+}
+
+/* Modo Cockpit (para FiDo y similares con font-size: 150% en html) */
+html[style*="font-size: 150%"] .hogar-header-app,
+[data-tema-cockpit] .hogar-header-app {
+  background: var(--ck-bg2);
+  border-bottom-color: var(--ck-line);
+  /* Ajuste de altura para escala 150% */
+  height: auto;
+  min-height: 3.5rem;
+}
+
+html[style*="font-size: 150%"] .hogar-header-app__sep,
+[data-tema-cockpit] .hogar-header-app__sep {
+  background: var(--ck-line);
+}
+
+html[style*="font-size: 150%"] .hogar-header-app__app,
+[data-tema-cockpit] .hogar-header-app__app {
+  color: var(--ck-accent);
+}
+
+html[style*="font-size: 150%"] .hogar-header-app__nav-btn,
+[data-tema-cockpit] .hogar-header-app__nav-btn {
+  color: var(--ck-on-variant);
+}
+
+html[style*="font-size: 150%"] .hogar-header-app__nav-btn:hover,
+[data-tema-cockpit] .hogar-header-app__nav-btn:hover {
+  background: var(--ck-bg3);
+  color: var(--ck-on-surface);
+}
+
+html[style*="font-size: 150%"] .hogar-header-app__nav-btn--activo,
+[data-tema-cockpit] .hogar-header-app__nav-btn--activo {
+  background: var(--ck-bg3);
+  color: var(--ck-on-surface);
+}
+
+html[style*="font-size: 150%"] .hogar-header-app__clock,
+[data-tema-cockpit] .hogar-header-app__clock {
+  color: var(--ck-accent);
+  font-family: var(--ck-fuente);
+}
+
+html[style*="font-size: 150%"] .hogar-header-app__btn,
+[data-tema-cockpit] .hogar-header-app__btn {
+  color: var(--ck-on-variant);
+}
+
+html[style*="font-size: 150%"] .hogar-header-app__btn:hover,
+[data-tema-cockpit] .hogar-header-app__btn:hover {
+  background: var(--ck-bg3);
+  color: var(--ck-on-surface);
+}
+
+/* ============================================================
+   8. Botón toggle tema
+   ============================================================ */
+.hogar-toggle-tema {
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--radio-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--on-surface-variant);
+  font-size: 1.1rem;
+  transition: background var(--transicion), color var(--transicion), transform var(--transicion);
+}
+
+.hogar-toggle-tema:hover {
+  background: var(--surface-container);
+  color: var(--on-surface);
+}
+
+.hogar-toggle-tema:active {
+  transform: scale(0.9);
+}
+
+/* ============================================================
+   9. Layout — Contenedor principal
+   ============================================================ */
+.hogar-contenedor {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 5.5rem 1.5rem 3rem;
+}
+
+/* ============================================================
+   10. Efecto Lumina (resplandor degradado superior)
+   ============================================================ */
+.hogar-lumina {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  height: 500px;
+  background: radial-gradient(
+    circle at 50% 0%,
+    rgba(164, 238, 224, 0.35) 0%,
+    rgba(248, 249, 250, 0) 70%
+  );
+  pointer-events: none;
+  z-index: -1;
+}
+
+[data-tema="oscuro"] .hogar-lumina {
+  background: radial-gradient(
+    circle at 50% 0%,
+    rgba(26, 106, 96, 0.15) 0%,
+    rgba(14, 17, 18, 0) 70%
+  );
+}
+
+/* ============================================================
+   11. Tarjetas — Estilo orgánico
+   ============================================================ */
+.hogar-tarjeta {
+  background: var(--surface-container-lowest);
+  border-radius: var(--radio-md);
+  padding: 1.25rem;
+  box-shadow: var(--sombra-md);
+  transition: box-shadow var(--transicion-lenta), transform var(--transicion);
+  position: relative;
+  overflow: hidden;
+}
+
+.hogar-tarjeta:hover {
+  box-shadow: var(--sombra-lg);
+}
+
+/* Variantes de color para tarjetas */
+.hogar-tarjeta--primary {
+  background: rgba(164, 238, 224, 0.25);
+  backdrop-filter: blur(8px);
+}
+
+[data-tema="oscuro"] .hogar-tarjeta--primary {
+  background: rgba(17, 101, 90, 0.25);
+}
+
+.hogar-tarjeta--secondary {
+  background: rgba(223, 224, 255, 0.20);
+  backdrop-filter: blur(8px);
+}
+
+[data-tema="oscuro"] .hogar-tarjeta--secondary {
+  background: rgba(59, 67, 120, 0.20);
+}
+
+.hogar-tarjeta--tertiary {
+  background: rgba(254, 213, 223, 0.25);
+  backdrop-filter: blur(8px);
+}
+
+[data-tema="oscuro"] .hogar-tarjeta--tertiary {
+  background: rgba(90, 63, 71, 0.25);
+}
+
+/* Elementos de tarjeta */
+.hogar-tarjeta__cabecera {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.hogar-tarjeta__icono-circulo {
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radio-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.hogar-tarjeta__icono-circulo--primary {
+  background: rgba(26, 106, 96, 0.10);
+  color: var(--primary);
+}
+
+.hogar-tarjeta__icono-circulo--tertiary {
+  background: rgba(118, 87, 95, 0.10);
+  color: var(--tertiary);
+}
+
+.hogar-tarjeta__icono-circulo--secondary {
+  background: rgba(83, 91, 147, 0.10);
+  color: var(--secondary);
+}
+
+.hogar-tarjeta__label {
+  font-family: var(--fuente-titular);
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  font-weight: 700;
+  color: var(--on-surface-variant);
+}
+
+.hogar-tarjeta__valor {
+  font-family: var(--fuente-titular);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--on-surface);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.hogar-tarjeta__valor--primary { color: var(--primary); }
+.hogar-tarjeta__valor--exito   { color: var(--exito); }
+.hogar-tarjeta__valor--peligro { color: var(--peligro); }
+
+.hogar-tarjeta__detalle {
+  font-size: 0.8rem;
+  color: var(--on-surface-variant);
+  margin-top: var(--gap-xs);
+}
+
+.hogar-tarjeta__enlace {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.75rem;
+  color: var(--primary);
+  text-decoration: none;
+  font-family: var(--fuente-titular);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  transition: opacity var(--transicion);
+}
+
+.hogar-tarjeta__enlace:hover {
+  opacity: 0.7;
+}
+
+/* Estado offline */
+.hogar-tarjeta--offline {
+  opacity: 0.45;
+}
+
+.hogar-tarjeta--offline .hogar-tarjeta__valor {
+  color: var(--on-surface-variant);
+}
+
+.hogar-estado-offline {
+  font-size: 0.82rem;
+  color: var(--peligro);
+  font-style: italic;
+}
+
+/* ============================================================
+   12. Grid de tarjetas
+   ============================================================ */
+.hogar-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--gap-lg);
+}
+
+/* ============================================================
+   13. Botones
+   ============================================================ */
+.hogar-boton {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-sm);
+  padding: 0.6rem 1.25rem;
+  border: none;
+  border-radius: var(--radio-full);
+  font-family: var(--fuente-titular);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  text-decoration: none;
+  transition: opacity var(--transicion), transform var(--transicion), box-shadow var(--transicion);
+}
+
+.hogar-boton:active {
+  transform: scale(0.96);
+}
+
+.hogar-boton--primario {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dim));
+  color: var(--on-primary);
+  box-shadow: 0 8px 20px rgba(26, 106, 96, 0.20);
+}
+
+.hogar-boton--primario:hover {
+  opacity: 0.9;
+  box-shadow: 0 12px 28px rgba(26, 106, 96, 0.30);
+}
+
+.hogar-boton--secundario {
+  background: rgba(255, 255, 255, 0.50);
+  backdrop-filter: blur(8px);
+  color: var(--on-surface);
+}
+
+[data-tema="oscuro"] .hogar-boton--secundario {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.hogar-boton--secundario:hover {
+  background: rgba(255, 255, 255, 0.70);
+}
+
+[data-tema="oscuro"] .hogar-boton--secundario:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.hogar-boton--peligro {
+  background: var(--peligro);
+  color: #fff;
+}
+
+/* ============================================================
+   14. Alertas / Notificaciones
+   ============================================================ */
+.hogar-alerta {
+  padding: var(--gap-md) var(--gap-lg);
+  border-radius: var(--radio-lg);
+  font-size: 0.85rem;
+  transition: background var(--transicion);
+}
+
+.hogar-alerta--exito {
+  background: var(--exito-fondo);
+  color: var(--exito);
+}
+
+.hogar-alerta--aviso {
+  background: var(--aviso-fondo);
+  color: var(--aviso);
+}
+
+.hogar-alerta--error {
+  background: var(--peligro-fondo);
+  color: var(--peligro);
+}
+
+.hogar-alerta__tiempo {
+  font-size: 0.72rem;
+  color: var(--on-surface-variant);
+  margin-top: var(--gap-xs);
+}
+
+/* ============================================================
+   15. Formas orgánicas (border-radius asimétricos)
+   ============================================================ */
+.forma-organica-1 {
+  border-radius: 60% 40% 70% 30% / 40% 50% 60% 50%;
+}
+
+.forma-organica-2 {
+  border-radius: 30% 70% 40% 60% / 50% 60% 40% 50%;
+}
+
+.forma-organica-3 {
+  border-radius: 50% 50% 20% 80% / 25% 80% 20% 75%;
+}
+
+.forma-organica-4 {
+  border-radius: 40% 60% 60% 40% / 60% 30% 70% 40%;
+}
+
+/* ============================================================
+   16. Glassmorphism
+   ============================================================ */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+}
+
+/* ============================================================
+   17. Filas de datos (para listas dentro de tarjetas)
+   ============================================================ */
+.hogar-fila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.40);
+  border-radius: var(--radio-md);
+  transition: background var(--transicion);
+}
+
+[data-tema="oscuro"] .hogar-fila {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.hogar-fila + .hogar-fila {
+  margin-top: var(--gap-sm);
+}
+
+.hogar-fila__izq {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.hogar-fila__valor {
+  font-family: var(--fuente-titular);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+/* ============================================================
+   18. Badges de estado
+   ============================================================ */
+.hogar-badge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radio-full);
+  font-family: var(--fuente-titular);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.hogar-badge--exito {
+  background: var(--exito-fondo);
+  color: var(--exito);
+}
+
+.hogar-badge--peligro {
+  background: var(--peligro-fondo);
+  color: var(--peligro);
+}
+
+.hogar-badge--primary {
+  background: rgba(164, 238, 224, 0.30);
+  color: var(--primary);
+}
+
+/* ============================================================
+   19. Tabla estilizada
+   ============================================================ */
+.hogar-tabla-wrap {
+  background: var(--surface-container-lowest);
+  border-radius: var(--radio-xl);
+  box-shadow: var(--sombra-sm);
+  overflow: hidden;
+}
+
+.hogar-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.hogar-tabla th {
+  background: var(--surface-container);
+  text-align: left;
+  padding: 0.75rem 1rem;
+  font-family: var(--fuente-titular);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--on-surface-variant);
+  font-weight: 700;
+}
+
+.hogar-tabla td {
+  padding: 0.6rem 1rem;
+  border-top: 1px solid var(--surface-container);
+}
+
+.hogar-tabla tr:hover td {
+  background: rgba(164, 238, 224, 0.06);
+}
+
+/* ============================================================
+   20. Sección con título
+   ============================================================ */
+.hogar-seccion {
+  margin-bottom: var(--gap-2xl);
+}
+
+.hogar-seccion__titulo {
+  font-family: var(--fuente-titular);
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--on-surface-variant);
+  opacity: 0.6;
+  margin-bottom: var(--gap-lg);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.hogar-seccion__titulo::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--outline-variant);
+  opacity: 0.2;
+}
+
+/* ============================================================
+   21. Cargando / Spinner
+   ============================================================ */
+.cargando {
+  color: var(--on-surface-variant);
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+/* ============================================================
+   22. Navigation Drawer (glassmorphic)
+   ============================================================ */
+.hogar-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100vh;
+  height: 100dvh;
+  width: 17rem;
+  background: var(--glass-bg);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-radius: var(--radio-xl) 0 0 var(--radio-xl);
+  padding: 1.5rem 1rem;
+  box-shadow: var(--sombra-lg);
+  border: 1px solid var(--glass-border);
+  border-right: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  z-index: 200;
+  transform: translateX(0);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow-y: auto;
+}
+
+.hogar-drawer.oculto {
+  transform: translateX(100%);
+  pointer-events: none;
+}
+
+.hogar-drawer__titulo {
+  font-family: var(--fuente-titular);
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--on-surface-variant);
+  font-weight: 700;
+  padding: 0.5rem 0.75rem 0.25rem;
+  opacity: 0.6;
+}
+
+.hogar-drawer__enlace {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radio-lg);
+  color: var(--on-surface-variant);
+  text-decoration: none;
+  font-family: var(--fuente-cuerpo);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: background var(--transicion), color var(--transicion);
+  border: none;
+  background: none;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+}
+
+.hogar-drawer__enlace:hover {
+  background: var(--surface-container);
+  color: var(--on-surface);
+}
+
+.hogar-drawer__enlace--activo {
+  background: rgba(164, 238, 224, 0.3);
+  color: var(--on-primary-container);
+}
+
+[data-tema="oscuro"] .hogar-drawer__enlace--activo {
+  background: rgba(164, 238, 224, 0.15);
+  color: var(--primary);
+}
+
+.hogar-drawer__separador {
+  height: 1px;
+  background: var(--outline-variant);
+  opacity: 0.3;
+  margin: 0.5rem 0.75rem;
+}
+
+.hogar-drawer__cerrar {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--on-surface-variant);
+  padding: 0.25rem;
+  border-radius: var(--radio-full);
+  transition: background var(--transicion);
+}
+
+.hogar-drawer__cerrar:hover {
+  background: var(--surface-container);
+}
+
+/* ============================================================
+   23. Lanzador — Grid de apps con blobs orgánicos
+   ============================================================ */
+.lanzador-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem 2rem;
+}
+
+@media (min-width: 768px) {
+  .lanzador-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+.lanzador-app {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.5s ease;
+}
+
+.lanzador-app:hover {
+  transform: translateY(-4px);
+}
+
+.lanzador-blob {
+  width: 5rem;
+  height: 5rem;
+  background: var(--surface-container-lowest);
+  box-shadow: var(--sombra-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: box-shadow var(--transicion-lenta), transform var(--transicion-lenta);
+  overflow: hidden;
+}
+
+@media (min-width: 768px) {
+  .lanzador-blob {
+    width: 5.5rem;
+    height: 5.5rem;
+  }
+}
+
+.lanzador-app:hover .lanzador-blob {
+  box-shadow: var(--sombra-lg);
+  transform: scale(1.05);
+}
+
+.lanzador-blob__icono {
+  font-size: 1.75rem;
+}
+
+.lanzador-blob__img {
+  width: 2rem;
+  height: 2rem;
+  object-fit: contain;
+}
+
+.lanzador-nombre {
+  font-family: var(--fuente-titular);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.lanzador-desc {
+  font-size: 0.56rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--on-surface-variant);
+  opacity: 0.6;
+  text-align: center;
+}
+
+/* Botón flotante de añadir */
+.lanzador-fab {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  z-index: 50;
+  width: 3.5rem;
+  height: 3.5rem;
+  background: rgba(164, 238, 224, 0.6);
+  color: var(--on-primary-container);
+  border: 1px solid var(--glass-border);
+  border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%;
+  box-shadow: var(--sombra-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  text-decoration: none;
+  font-size: 1.5rem;
+  transition: transform 0.5s ease, box-shadow var(--transicion);
+}
+
+.lanzador-fab:hover {
+  transform: scale(1.1);
+  box-shadow: var(--sombra-lg);
+}
+
+/* ============================================================
+   24. Responsive
+   ============================================================ */
+@media (max-width: 600px) {
+  .hogar-header__barra {
+    padding: 0.6rem 1rem;
+  }
+
+  .hogar-header__titulo {
+    font-size: 1rem;
+  }
+
+  .hogar-header__enlace {
+    font-size: 0.7rem;
+    padding: 0.4rem 0.5rem;
+  }
+
+  .hogar-header__enlace span:not(.material-symbols-outlined) {
+    display: none;
+  }
+
+  .hogar-contenedor {
+    padding: 5rem 1rem 2rem;
+  }
+
+  .hogar-grid {
+    grid-template-columns: 1fr;
+    gap: var(--gap-md);
+  }
+
+  .hogar-tarjeta {
+    padding: var(--gap-lg);
+  }
+
+  .hogar-tarjeta__valor {
+    font-size: 1.6rem;
+  }
+
+  .lanzador-grid {
+    gap: 1rem;
+  }
+}
+
+/* ============================================================
+   25. Utilidades
+   ============================================================ */
+
+/* Ocultar elementos Alpine.js hasta inicialización */
+[x-cloak] {
+  display: none !important;
+}
+
+/* Tabular nums para datos numéricos */
+.nums-tabulares {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Scrollbar fina */
+.scroll-fino::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+}
+
+.scroll-fino::-webkit-scrollbar-thumb {
+  background: var(--outline-variant);
+  border-radius: 3px;
+}
+
+/* Decoración inferior sutil */
+.hogar-linea-glow {
+  width: 24rem;
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--primary), transparent);
+  opacity: 0.3;
+  filter: blur(4px);
+  margin: var(--gap-3xl) auto 0;
+}
+
+/* ============================================================
+   26. COCKPIT THEME — Variables --ck-* (modo oscuro por defecto)
+   Coexisten con el sistema Living Sanctuary sin romperlo.
+   El tema se activa con data-tema-cockpit="dark|light" en <html>.
+   ============================================================ */
+:root {
+  --ck-bg:           #060a09;
+  --ck-bg2:          #0a100e;
+  --ck-bg3:          #0f1a17;
+  --ck-accent:       #00e5c4;
+  --ck-accent-dim:   #009e88;
+  --ck-line:         rgba(0,229,196,0.12);
+  --ck-line-bright:  rgba(0,229,196,0.22);
+  --ck-on-surface:   #b8d8d0;
+  --ck-on-variant:   #3a6058;
+  --ck-danger:       #e85454;
+  --ck-warn:         #e8a03a;
+  --ck-success:      #3ae8a0;
+  --ck-input-bg:     rgba(0,229,196,0.04);
+  --ck-input-border: rgba(0,229,196,0.15);
+  --ck-row-hover:    rgba(0,229,196,0.04);
+  --ck-fuente:       'JetBrains Mono', 'Fira Code', monospace;
+}
+
+[data-tema-cockpit="light"] {
+  --ck-bg:           #f5f2ed;
+  --ck-bg2:          #ede9e3;
+  --ck-bg3:          #e5e0d8;
+  --ck-accent:       #1a6a60;
+  --ck-accent-dim:   #0e4d45;
+  --ck-line:         rgba(26,106,96,0.12);
+  --ck-line-bright:  rgba(26,106,96,0.22);
+  --ck-on-surface:   #1c2e2b;
+  --ck-on-variant:   #5a8078;
+  --ck-danger:       #c62828;
+  --ck-warn:         #b45309;
+  --ck-success:      #2e7d32;
+  --ck-input-bg:     rgba(26,106,96,0.04);
+  --ck-input-border: rgba(26,106,96,0.18);
+  --ck-row-hover:    rgba(26,106,96,0.04);
+}
+
+/* ============================================================
+   27. Cockpit — Animaciones
+   ============================================================ */
+@keyframes pulse-danger {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+@keyframes blink {
+  0%, 49%  { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+.danger-pulse  { animation: pulse-danger 1.2s ease-in-out infinite; }
+.cursor-blink  { animation: blink 1s step-end infinite; }
+
+/* ============================================================
+   28. Cockpit — ZoneLabel (etiqueta de zona HUD)
+   ============================================================ */
+.zone-label {
+  font-family: var(--ck-fuente);
+  font-size: 0.48rem;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--ck-on-variant);
+  margin-bottom: 0.4rem;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.zone-label__diamond { color: var(--ck-accent-dim); }
+
+/* ============================================================
+   29. Cockpit — MiniBar (barra de progreso horizontal)
+   ============================================================ */
+.minibar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.62rem;
+  font-family: var(--ck-fuente);
+}
+
+.minibar__label {
+  width: 3.5rem;
+  color: var(--ck-on-variant);
+  flex-shrink: 0;
+}
+
+.minibar__track {
+  flex: 1;
+  height: 2px;
+  background: rgba(0,229,196,0.07);
+  border-radius: 1px;
+  overflow: hidden;
+}
+
+[data-tema-cockpit="light"] .minibar__track {
+  background: rgba(26,106,96,0.07);
+}
+
+.minibar__fill {
+  height: 100%;
+  border-radius: 1px;
+  transition: width 0.8s ease;
+}
+
+.minibar__valor {
+  width: 2.5rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================
+   30. Cockpit — StatusDot (punto de estado con glow)
+   ============================================================ */
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.status-dot--ok {
+  background: #3ae8a0;
+  box-shadow: 0 0 6px #3ae8a0;
+}
+
+.status-dot--warn {
+  background: #e8a03a;
+  box-shadow: 0 0 6px #e8a03a;
+}
+
+.status-dot--danger {
+  background: #e85454;
+  box-shadow: 0 0 6px #e85454;
+  animation: pulse-danger 1.2s ease-in-out infinite;
+}
+
+/* Sin glow en modo claro */
+[data-tema-cockpit="light"] .status-dot--ok    { box-shadow: none; }
+[data-tema-cockpit="light"] .status-dot--warn  { box-shadow: none; }
+[data-tema-cockpit="light"] .status-dot--danger { box-shadow: none; }
+
+/* ============================================================
+   31. Cockpit — CockpitLine (divisor de 1px)
+   ============================================================ */
+.cockpit-line {
+  height: 1px;
+  background: var(--ck-line);
+  border: none;
+  margin: 0;
+}
+
+.cockpit-line--bright {
+  background: var(--ck-line-bright);
+}
+
+/* ============================================================
+   32. Cockpit — Scrollbar global
+   ============================================================ */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0,229,196,0.15) transparent;
+}
+
+*::-webkit-scrollbar       { width: 4px; height: 4px; }
+*::-webkit-scrollbar-thumb {
+  background: rgba(0,229,196,0.15);
+  border-radius: 2px;
+}
+
+[data-tema-cockpit="light"] * {
+  scrollbar-color: rgba(26,106,96,0.15) transparent;
+}
+
+[data-tema-cockpit="light"] *::-webkit-scrollbar-thumb {
+  background: rgba(26,106,96,0.15);
+}
