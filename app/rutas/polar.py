@@ -62,7 +62,9 @@ def resumen_polar(dias: int = 7):
     ultimas = bd.consultar_todos(
         """
         SELECT polar_id, fecha_inicio, tipo, distancia_km,
-               duracion_segundos, calorias, fc_promedio, fc_maxima
+               duracion_segundos, calorias, fc_promedio, fc_maxima,
+               velocidad_media_kmh, velocidad_maxima_kmh,
+               desnivel_positivo, desnivel_negativo
         FROM actividades_polar
         WHERE date(fecha_inicio) >= ?
         ORDER BY fecha_inicio DESC
@@ -106,6 +108,10 @@ def resumen_polar(dias: int = 7):
                 "calorias": a["calorias"],
                 "fc_promedio": a["fc_promedio"],
                 "fc_maxima": a["fc_maxima"],
+                "velocidad_media_kmh": a["velocidad_media_kmh"],
+                "velocidad_maxima_kmh": a["velocidad_maxima_kmh"],
+                "desnivel_positivo": a["desnivel_positivo"],
+                "desnivel_negativo": a["desnivel_negativo"],
             }
             for a in ultimas
         ],
@@ -132,7 +138,9 @@ def historial_polar(limite: int = 30):
     actividades = bd.consultar_todos(
         """
         SELECT polar_id, fecha_inicio, tipo, distancia_km,
-               duracion_segundos, calorias, fc_promedio, fc_maxima
+               duracion_segundos, calorias, fc_promedio, fc_maxima,
+               velocidad_media_kmh, velocidad_maxima_kmh,
+               desnivel_positivo, desnivel_negativo
         FROM actividades_polar
         ORDER BY fecha_inicio DESC
         LIMIT ?
@@ -153,6 +161,10 @@ def historial_polar(limite: int = 30):
                 "calorias": a["calorias"],
                 "fc_promedio": a["fc_promedio"],
                 "fc_maxima": a["fc_maxima"],
+                "velocidad_media_kmh": a["velocidad_media_kmh"],
+                "velocidad_maxima_kmh": a["velocidad_maxima_kmh"],
+                "desnivel_positivo": a["desnivel_positivo"],
+                "desnivel_negativo": a["desnivel_negativo"],
             }
             for a in actividades
         ],
@@ -196,8 +208,10 @@ def _guardar_ejercicios(ejercicios: list[dict]) -> int:
             """
             INSERT INTO actividades_polar
                 (polar_id, fecha_inicio, fecha_subida, tipo, distancia_km,
-                 duracion_segundos, calorias, fc_promedio, fc_maxima)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 duracion_segundos, calorias, fc_promedio, fc_maxima,
+                 velocidad_media_kmh, velocidad_maxima_kmh,
+                 desnivel_positivo, desnivel_negativo)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 ej["polar_id"],
@@ -209,6 +223,10 @@ def _guardar_ejercicios(ejercicios: list[dict]) -> int:
                 ej.get("calorias"),
                 ej.get("fc_promedio"),
                 ej.get("fc_maxima"),
+                ej.get("velocidad_media_kmh"),
+                ej.get("velocidad_maxima_kmh"),
+                ej.get("desnivel_positivo"),
+                ej.get("desnivel_negativo"),
             ),
         )
         nuevos += 1

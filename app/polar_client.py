@@ -10,6 +10,7 @@ Los ejercicios ya vistos no vuelven a aparecer en futuras transacciones.
 
 import re
 import logging
+import xml.etree.ElementTree as ET
 import httpx
 
 from app.config import POLAR_ACCESS_TOKEN, POLAR_USER_ID
@@ -44,6 +45,65 @@ def _parsear_duracion_iso(duracion: str) -> int:
     return int(horas * 3600 + minutos * 60 + segundos)
 
 
+def _obtener_datos_ruta(cliente: httpx.Client, ejercicio_id: str) -> dict:
+    """
+    Descarga el TCX del ejercicio y extrae velocidad máxima y desnivel.
+    Devuelve dict con velocidad_maxima_kmh, desnivel_positivo, desnivel_negativo.
+    Devuelve valores None si no hay ruta o falla la descarga.
+    """
+    resultado = {"velocidad_maxima_kmh": None, "desnivel_positivo": None, "desnivel_negativo": None}
+    try:
+        resp = cliente.get(
+            f"{BASE_URL}/exercises/{ejercicio_id}/tcx",
+            headers={**_cabeceras(), "Accept": "application/vnd.garmin.tcx+xml"},
+            timeout=30,
+        )
+        if resp.status_code != 200:
+            return resultado
+
+        # Parsear XML — namespace del TCX de Garmin
+        ns = {"tcx": "http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2"}
+        raiz = ET.fromstring(resp.text)
+
+        # Velocidad máxima: tomar el máximo entre todos los laps
+        vel_max_ms = 0.0
+        for lap in raiz.findall(".//tcx:Lap", ns):
+            vel = lap.findtext("tcx:MaximumSpeed", namespaces=ns)
+            if vel:
+                vel_max_ms = max(vel_max_ms, float(vel))
+
+        if vel_max_ms > 0:
+            resultado["velocidad_maxima_kmh"] = round(vel_max_ms * 3.6, 1)
+
+        # Desnivel: procesar todas las altitudes con umbral de 5m para filtrar ruido GPS
+        altitudes = []
+        for tp in raiz.findall(".//tcx:Trackpoint", ns):
+            alt = tp.findtext("tcx:AltitudeMeters", namespaces=ns)
+            if alt:
+                altitudes.append(float(alt))
+
+        if len(altitudes) > 1:
+            ganancia = 0.0
+            perdida = 0.0
+            UMBRAL = 5.0  # metros — filtra ruido GPS
+            acum = 0.0
+            for i in range(1, len(altitudes)):
+                acum += altitudes[i] - altitudes[i - 1]
+                if acum >= UMBRAL:
+                    ganancia += acum
+                    acum = 0.0
+                elif acum <= -UMBRAL:
+                    perdida += abs(acum)
+                    acum = 0.0
+            resultado["desnivel_positivo"] = int(round(ganancia))
+            resultado["desnivel_negativo"] = int(round(perdida))
+
+    except Exception as e:
+        logger.warning(f"Polar: no se pudieron obtener datos de ruta para {ejercicio_id}: {e}")
+
+    return resultado
+
+
 def sincronizar_ejercicios() -> list[dict]:
     """
     Descarga todos los ejercicios disponibles desde Polar Flow usando el endpoint
@@ -76,8 +136,24 @@ def sincronizar_ejercicios() -> list[dict]:
             ejercicios = []
             for datos in datos_lista:
                 ejercicio = _parsear_ejercicio(datos)
-                if ejercicio:
-                    ejercicios.append(ejercicio)
+                if not ejercicio:
+                    continue
+                # Velocidad media calculada de distancia/duración
+                if ejercicio.get("distancia_km") and ejercicio["duracion_segundos"] > 0:
+                    ejercicio["velocidad_media_kmh"] = round(
+                        ejercicio["distancia_km"] / (ejercicio["duracion_segundos"] / 3600), 1
+                    )
+                else:
+                    ejercicio["velocidad_media_kmh"] = None
+                # Datos de ruta (velocidad máxima y desnivel) si el ejercicio tiene GPS
+                if datos.get("has_route"):
+                    datos_ruta = _obtener_datos_ruta(cliente, ejercicio["polar_id"])
+                    ejercicio.update(datos_ruta)
+                else:
+                    ejercicio["velocidad_maxima_kmh"] = None
+                    ejercicio["desnivel_positivo"] = None
+                    ejercicio["desnivel_negativo"] = None
+                ejercicios.append(ejercicio)
 
             logger.info(f"Polar: {len(ejercicios)} ejercicio(s) disponibles en la API")
             return ejercicios

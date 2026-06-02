@@ -574,6 +574,10 @@
                                 <th>Calorías</th>
                                 <th>FC media</th>
                                 <th>FC máx</th>
+                                <th>V. media</th>
+                                <th>V. máx</th>
+                                <th>D+</th>
+                                <th>D-</th>
                             </tr>
                         </thead>
                         <tbody id="polarTabla">
@@ -1103,7 +1107,7 @@
         fetch(API + '/polar/resumen?dias=' + dias)
             .then(function(r) { return r.json(); })
             .then(function(d) { renderPolar(d); })
-            .catch(function() { renderPolarError(); });
+            .catch(function() { renderPolarError(11); });
     }
 
     function renderPolar(d) {
@@ -1115,7 +1119,7 @@
 
         var tbody = document.getElementById('polarTabla');
         if (!d.ultimas_actividades || d.ultimas_actividades.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" class="sin-datos">Sin actividades en este período. Sincroniza el reloj con la app de Polar.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="11" class="sin-datos">Sin actividades en este período. Sincroniza el reloj con la app de Polar.</td></tr>';
             return;
         }
         tbody.innerHTML = d.ultimas_actividades.map(function(a) {
@@ -1128,13 +1132,17 @@
                 '<td>' + (a.calorias ? a.calorias + ' kcal' : '—') + '</td>' +
                 '<td>' + (a.fc_promedio ? a.fc_promedio + ' bpm' : '—') + '</td>' +
                 '<td>' + (a.fc_maxima  ? a.fc_maxima  + ' bpm' : '—') + '</td>' +
+                '<td>' + (a.velocidad_media_kmh  ? a.velocidad_media_kmh.toFixed(1)  + ' km/h' : '—') + '</td>' +
+                '<td>' + (a.velocidad_maxima_kmh ? a.velocidad_maxima_kmh.toFixed(1) + ' km/h' : '—') + '</td>' +
+                '<td>' + (a.desnivel_positivo != null ? '+' + a.desnivel_positivo + ' m' : '—') + '</td>' +
+                '<td>' + (a.desnivel_negativo != null ? '-' + a.desnivel_negativo + ' m' : '—') + '</td>' +
                 '</tr>';
         }).join('');
     }
 
     function renderPolarError() {
         document.getElementById('polarTabla').innerHTML =
-            '<tr><td colspan="7" class="sin-datos">Error al cargar datos de Polar.</td></tr>';
+            '<tr><td colspan="11" class="sin-datos">Error al cargar datos de Polar.</td></tr>';
     }
 
     function sincronizarPolar() {

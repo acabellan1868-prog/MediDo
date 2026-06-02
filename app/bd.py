@@ -71,6 +71,24 @@ def migrar_bd():
             DROP TABLE tracking_claude;
             ALTER TABLE tracking_claude_new RENAME TO tracking_claude;
         """)
+
+    # Migración: nuevas columnas en actividades_polar
+    if "actividades_polar" in tablas:
+        columnas_polar = {
+            fila[1]
+            for fila in conexion.execute("PRAGMA table_info(actividades_polar)").fetchall()
+        }
+        nuevas_polar = {
+            "velocidad_media_kmh":  "REAL",
+            "velocidad_maxima_kmh": "REAL",
+            "desnivel_positivo":    "INTEGER",
+            "desnivel_negativo":    "INTEGER",
+        }
+        for col, tipo in nuevas_polar.items():
+            if col not in columnas_polar:
+                conexion.execute(f"ALTER TABLE actividades_polar ADD COLUMN {col} {tipo}")
+        conexion.commit()
+
     conexion.close()
 
 
