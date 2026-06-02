@@ -333,6 +333,7 @@
                 <button id="tab-btn-historial"             onclick="cambiarTab('historial')">HISTORIAL</button>
                 <button id="tab-btn-alertas"               onclick="cambiarTab('alertas')">ALERTAS</button>
                 <button id="tab-btn-claude"                onclick="cambiarTab('claude')">CLAUDE</button>
+                <button id="tab-btn-polar"                 onclick="cambiarTab('polar')">POLAR</button>
             </nav>
         </div>
         <div class="ck-hdr-der">
@@ -368,6 +369,8 @@
                 onclick="cambiarTab('alertas');cerrarDrawer()">ALERTAS</button>
         <button class="md-drawer__item" id="drawer-claude"
                 onclick="cambiarTab('claude');cerrarDrawer()">CLAUDE</button>
+        <button class="md-drawer__item" id="drawer-polar"
+                onclick="cambiarTab('polar');cerrarDrawer()">POLAR</button>
         <div class="md-drawer__sep"></div>
         <button class="md-drawer__item" onclick="window.location=window.location.origin+'/red/'">RED</button>
         <button class="md-drawer__item" onclick="window.location=window.location.origin+'/finanzas/'">FINANZAS</button>
@@ -528,6 +531,59 @@
             </div>
         </div>
 
+        <!-- ══ PANEL POLAR ══ -->
+        <div class="md-panel" id="panelPolar">
+            <div class="md-seccion">
+                <div class="md-seccion__titulo">
+                    <span class="material-symbols-outlined">directions_run</span> Polar Flow
+                    <span class="sub" id="polar-ultima-sync"></span>
+                </div>
+
+                <!-- Botón sincronizar + estado -->
+                <div class="md-filtros" style="margin-bottom:1.25rem">
+                    <button class="md-btn" id="btnSincronizarPolar" onclick="sincronizarPolar()">
+                        <span class="material-symbols-outlined" style="font-size:0.85rem;vertical-align:middle">sync</span>
+                        SINCRONIZAR
+                    </button>
+                    <span id="polar-sync-msg" style="font-size:0.65rem;color:var(--ck-on-variant);margin-left:0.5rem"></span>
+                    <select id="polarPeriodo" class="md-select" onchange="cargarPolar()">
+                        <option value="7">Últimos 7 días</option>
+                        <option value="30" selected>Últimos 30 días</option>
+                        <option value="90">Últimos 90 días</option>
+                    </select>
+                </div>
+
+                <!-- Resumen numérico -->
+                <div class="md-grid-metricas" id="polarResumen" style="margin-bottom:1.25rem">
+                    <div class="md-tarjeta"><div class="md-tarjeta__label">Actividades</div><div class="md-tarjeta__val" id="polarNumAct">—</div></div>
+                    <div class="md-tarjeta"><div class="md-tarjeta__label">Kilómetros</div><div class="md-tarjeta__val" id="polarKm">—</div></div>
+                    <div class="md-tarjeta"><div class="md-tarjeta__label">Calorías</div><div class="md-tarjeta__val" id="polarCal">—</div></div>
+                    <div class="md-tarjeta"><div class="md-tarjeta__label">Tiempo total</div><div class="md-tarjeta__val" id="polarTiempo">—</div></div>
+                    <div class="md-tarjeta"><div class="md-tarjeta__label">FC media</div><div class="md-tarjeta__val" id="polarFC">—</div></div>
+                </div>
+
+                <!-- Tabla de actividades -->
+                <div class="md-tabla-wrap">
+                    <table class="md-tabla">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Tipo</th>
+                                <th>Distancia</th>
+                                <th>Duración</th>
+                                <th>Calorías</th>
+                                <th>FC media</th>
+                                <th>FC máx</th>
+                            </tr>
+                        </thead>
+                        <tbody id="polarTabla">
+                            <tr><td colspan="7" class="sin-datos">Cargando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
     </main>
 
     <script>
@@ -586,7 +642,7 @@
     document.addEventListener('keydown', function(e) { if (e.key === 'Escape') cerrarDrawer(); });
 
     /* ── Pestañas ── */
-    var TABS = ['general','proxmox','contenedores','servicios','historial','alertas','claude'];
+    var TABS = ['general','proxmox','contenedores','servicios','historial','alertas','claude','polar'];
 
     function cambiarTab(nombre) {
         TABS.forEach(function(t) {
@@ -610,6 +666,7 @@
         if (nombre === 'historial')    cargarHistorial();
         if (nombre === 'alertas')      cargarAlertas();
         if (nombre === 'claude')       cargarSesionesClaudeAPI();
+        if (nombre === 'polar')        cargarPolar();
     }
 
     document.querySelectorAll('.md-tab').forEach(function(tab) {
@@ -1036,7 +1093,72 @@
         if (tab === 'historial')    cargarHistorial();
         if (tab === 'alertas')      cargarAlertas();
         if (tab === 'claude')       cargarSesionesClaudeAPI();
+        if (tab === 'polar')        cargarPolar();
     }, 60000);
+
+    /* ══ POLAR ══ */
+
+    function cargarPolar() {
+        var dias = document.getElementById('polarPeriodo').value;
+        fetch(API + '/polar/resumen?dias=' + dias)
+            .then(function(r) { return r.json(); })
+            .then(function(d) { renderPolar(d); })
+            .catch(function() { renderPolarError(); });
+    }
+
+    function renderPolar(d) {
+        document.getElementById('polarNumAct').textContent = d.num_actividades;
+        document.getElementById('polarKm').textContent     = d.km_totales > 0 ? d.km_totales.toFixed(1) + ' km' : '—';
+        document.getElementById('polarCal').textContent    = d.calorias_totales > 0 ? d.calorias_totales + ' kcal' : '—';
+        document.getElementById('polarTiempo').textContent = d.duracion_total_minutos > 0 ? Math.floor(d.duracion_total_minutos/60) + 'h ' + (d.duracion_total_minutos%60) + 'm' : '—';
+        document.getElementById('polarFC').textContent     = d.fc_promedio_general > 0 ? d.fc_promedio_general + ' bpm' : '—';
+
+        var tbody = document.getElementById('polarTabla');
+        if (!d.ultimas_actividades || d.ultimas_actividades.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="sin-datos">Sin actividades en este período. Sincroniza el reloj con la app de Polar.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = d.ultimas_actividades.map(function(a) {
+            var fecha = new Date(a.fecha).toLocaleDateString('es-ES', {day:'2-digit', month:'short', year:'numeric'});
+            return '<tr>' +
+                '<td>' + fecha + '</td>' +
+                '<td>' + (a.tipo || '—') + '</td>' +
+                '<td>' + (a.distancia_km ? a.distancia_km.toFixed(2) + ' km' : '—') + '</td>' +
+                '<td>' + (a.duracion_texto || '—') + '</td>' +
+                '<td>' + (a.calorias ? a.calorias + ' kcal' : '—') + '</td>' +
+                '<td>' + (a.fc_promedio ? a.fc_promedio + ' bpm' : '—') + '</td>' +
+                '<td>' + (a.fc_maxima  ? a.fc_maxima  + ' bpm' : '—') + '</td>' +
+                '</tr>';
+        }).join('');
+    }
+
+    function renderPolarError() {
+        document.getElementById('polarTabla').innerHTML =
+            '<tr><td colspan="7" class="sin-datos">Error al cargar datos de Polar.</td></tr>';
+    }
+
+    function sincronizarPolar() {
+        var btn = document.getElementById('btnSincronizarPolar');
+        var msg = document.getElementById('polar-sync-msg');
+        btn.disabled = true;
+        msg.textContent = 'Sincronizando...';
+        fetch(API + '/polar/sincronizar', { method: 'POST' })
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+                if (d.ok) {
+                    msg.textContent = d.nuevas_actividades > 0
+                        ? '✓ ' + d.nuevas_actividades + ' actividad(es) nueva(s)'
+                        : '✓ Sin actividades nuevas';
+                    document.getElementById('polar-ultima-sync').textContent =
+                        '· última sync: ' + new Date().toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'});
+                    cargarPolar();
+                } else {
+                    msg.textContent = '✗ Error al sincronizar';
+                }
+            })
+            .catch(function() { msg.textContent = '✗ Error de conexión'; })
+            .finally(function() { btn.disabled = false; });
+    }
     </script>
 </body>
 </html>
