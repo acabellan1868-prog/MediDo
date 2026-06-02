@@ -18,7 +18,9 @@ from app.recolector_proxmox import recolectar_proxmox
 from app.recolector_docker import recolectar_docker
 from app.health_checker import ejecutar_health_checks
 from app.alertador import evaluar_metricas, evaluar_contenedores, evaluar_servicios, limpiar_historial
-from app.rutas import resumen, proxmox, contenedores, servicios, alertas, claude
+from app.rutas import resumen, proxmox, contenedores, servicios, alertas, claude, polar
+from app.polar_client import sincronizar_ejercicios
+from app.rutas.polar import _guardar_ejercicios
 
 # Configurar logging
 logging.basicConfig(
@@ -40,6 +42,17 @@ def recolectar_todo():
         evaluar_contenedores(datos_docker.get("contenedores", []))
     except Exception as e:
         logger.error(f"Error en recoleccion de metricas: {e}")
+
+
+def ciclo_polar():
+    """Sincroniza ejercicios nuevos desde Polar Flow y los guarda en BD."""
+    try:
+        ejercicios = sincronizar_ejercicios()
+        nuevos = _guardar_ejercicios(ejercicios)
+        if nuevos:
+            logger.info(f"Polar: {nuevos} actividad(es) nueva(s) guardada(s)")
+    except Exception as e:
+        logger.error(f"Error en sincronización Polar: {e}")
 
 
 def ciclo_health():
@@ -91,6 +104,16 @@ async def ciclo_vida(app: FastAPI):
         replace_existing=True,
     )
 
+    # Sincronización con Polar Flow (cada 3 horas)
+    planificador.add_job(
+        ciclo_polar,
+        "interval",
+        hours=3,
+        id="sync_polar",
+        name="Sincronización Polar Flow",
+        replace_existing=True,
+    )
+
     planificador.start()
     logger.info(f"Metricas cada {INTERVALO_METRICAS}s, health checks cada {INTERVALO_HEALTH}s")
 
@@ -120,6 +143,7 @@ app.include_router(contenedores.ruta, prefix="/api/contenedores", tags=["Contene
 app.include_router(servicios.ruta, prefix="/api/servicios", tags=["Servicios"])
 app.include_router(alertas.ruta, prefix="/api/alertas", tags=["Alertas"])
 app.include_router(claude.ruta, prefix="/api/claude", tags=["Claude Code"])
+app.include_router(polar.ruta, prefix="/api/polar", tags=["Polar Flow"])
 
 # ---- Servir frontend estatico (DEBE ir al final, es catch-all) ----
 app.mount("/", StaticFiles(directory="static", html=True), name="static")

@@ -67,3 +67,9 @@ else:
 # Claude Code limites de tokens
 CLAUDE_LIMITE_5H_TOKENS = int(os.environ.get("CLAUDE_LIMITE_5H_TOKENS", "200000"))
 CLAUDE_LIMITE_SEMANA_TOKENS = int(os.environ.get("CLAUDE_LIMITE_SEMANA_TOKENS", "4000000"))
+
+# Polar AccessLink API
+POLAR_ACCESS_TOKEN = os.environ.get("POLAR_ACCESS_TOKEN", "")
+POLAR_USER_ID = os.environ.get("POLAR_USER_ID", "")
+POLAR_CLIENT_ID = os.environ.get("POLAR_CLIENT_ID", "")
+POLAR_CLIENT_SECRET = os.environ.get("POLAR_CLIENT_SECRET", "")

@@ -79,6 +79,21 @@ CREATE TABLE IF NOT EXISTS tracking_claude (
     CHECK(coste_cache_usd >= 0)
 );
 
+-- Actividades deportivas sincronizadas desde Polar Flow
+CREATE TABLE IF NOT EXISTS actividades_polar (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    polar_id TEXT UNIQUE NOT NULL,        -- ID de Polar para evitar duplicados
+    fecha_inicio TEXT NOT NULL,           -- ISO 8601: inicio del ejercicio
+    fecha_subida TEXT,                    -- Cuándo se subió a Polar Flow
+    tipo TEXT NOT NULL,                   -- RUNNING, CYCLING, SWIMMING, etc.
+    distancia_km REAL,                    -- En kilómetros (puede ser NULL para ejercicios sin GPS)
+    duracion_segundos INTEGER NOT NULL,   -- Duración total del ejercicio
+    calorias INTEGER,                     -- Calorías quemadas
+    fc_promedio INTEGER,                  -- Frecuencia cardíaca promedio (bpm)
+    fc_maxima INTEGER,                    -- Frecuencia cardíaca máxima (bpm)
+    fecha_registro TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 -- Indices para búsquedas eficientes
 CREATE INDEX IF NOT EXISTS idx_metricas_fecha ON metricas(fecha);
 CREATE INDEX IF NOT EXISTS idx_health_fecha ON health_checks(fecha);
@@ -88,3 +103,5 @@ CREATE INDEX IF NOT EXISTS idx_claude_sesion ON tracking_claude(session_id);
 CREATE INDEX IF NOT EXISTS idx_claude_fecha_fin ON tracking_claude(fecha_fin);
 CREATE INDEX IF NOT EXISTS idx_claude_fecha_registro ON tracking_claude(fecha_registro);
 CREATE INDEX IF NOT EXISTS idx_claude_proyecto ON tracking_claude(proyecto);
+CREATE INDEX IF NOT EXISTS idx_polar_fecha ON actividades_polar(fecha_inicio);
+CREATE INDEX IF NOT EXISTS idx_polar_tipo ON actividades_polar(tipo);
