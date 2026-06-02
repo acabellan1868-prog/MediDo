@@ -46,76 +46,40 @@ def _parsear_duracion_iso(duracion: str) -> int:
 
 def sincronizar_ejercicios() -> list[dict]:
     """
-    Descarga los ejercicios nuevos desde Polar Flow.
+    Descarga todos los ejercicios disponibles desde Polar Flow usando el endpoint
+    no transaccional GET /v3/exercises. No consume los datos, por lo que es seguro
+    llamarlo repetidamente. La deduplicación se hace por polar_id en la BD.
     Devuelve lista de dicts listos para insertar en la BD.
-    Devuelve lista vacía si no hay ejercicios nuevos o si Polar no está configurado.
     """
-    if not POLAR_ACCESS_TOKEN or not POLAR_USER_ID:
-        logger.warning("Polar no configurado (POLAR_ACCESS_TOKEN o POLAR_USER_ID vacíos)")
+    if not POLAR_ACCESS_TOKEN:
+        logger.warning("Polar no configurado (POLAR_ACCESS_TOKEN vacío)")
         return []
-
-    url_base = f"{BASE_URL}/users/{POLAR_USER_ID}"
 
     try:
         with httpx.Client(timeout=30) as cliente:
-
-            # --- Paso 1: Crear transacción ---
-            resp = cliente.post(
-                f"{url_base}/exercise-transactions",
-                headers=_cabeceras(),
-            )
-            if resp.status_code == 204:
-                logger.info("Polar: no hay ejercicios nuevos")
-                return []
-            if resp.status_code != 201:
-                logger.error(f"Polar: error creando transacción ({resp.status_code}): {resp.text}")
-                return []
-
-            transaccion = resp.json()
-            transaction_id = transaccion.get("transaction-id")
-            if not transaction_id:
-                logger.error("Polar: respuesta de transacción sin transaction-id")
-                return []
-
-            logger.info(f"Polar: transacción creada (id={transaction_id})")
-
-            # --- Paso 2: Listar ejercicios de la transacción ---
             resp = cliente.get(
-                f"{url_base}/exercise-transactions/{transaction_id}",
+                f"{BASE_URL}/exercises",
                 headers=_cabeceras(),
             )
+            if resp.status_code == 204 or resp.text.strip() in ("", "[]"):
+                logger.info("Polar: no hay ejercicios disponibles")
+                return []
             if resp.status_code != 200:
-                logger.error(f"Polar: error listando ejercicios ({resp.status_code})")
+                logger.error(f"Polar: error obteniendo ejercicios ({resp.status_code}): {resp.text}")
                 return []
 
-            lista = resp.json()
-            enlaces = lista.get("exercises", [])
-            if not enlaces:
-                logger.info("Polar: transacción sin ejercicios")
-                _confirmar_transaccion(cliente, url_base, transaction_id)
+            datos_lista = resp.json()
+            if not datos_lista:
+                logger.info("Polar: lista de ejercicios vacía")
                 return []
 
-            logger.info(f"Polar: {len(enlaces)} ejercicio(s) en la transacción")
-
-            # --- Paso 3: Descargar detalle de cada ejercicio ---
             ejercicios = []
-            for enlace in enlaces:
-                url_ejercicio = enlace.get("url", "")
-                if not url_ejercicio:
-                    continue
-                resp_ej = cliente.get(url_ejercicio, headers=_cabeceras())
-                if resp_ej.status_code != 200:
-                    logger.warning(f"Polar: no se pudo obtener ejercicio {url_ejercicio} ({resp_ej.status_code})")
-                    continue
-                datos = resp_ej.json()
+            for datos in datos_lista:
                 ejercicio = _parsear_ejercicio(datos)
                 if ejercicio:
                     ejercicios.append(ejercicio)
 
-            # --- Paso 4: Confirmar transacción ---
-            _confirmar_transaccion(cliente, url_base, transaction_id)
-
-            logger.info(f"Polar: {len(ejercicios)} ejercicio(s) procesados")
+            logger.info(f"Polar: {len(ejercicios)} ejercicio(s) disponibles en la API")
             return ejercicios
 
     except httpx.RequestError as e:
@@ -126,28 +90,18 @@ def sincronizar_ejercicios() -> list[dict]:
         return []
 
 
-def _confirmar_transaccion(cliente: httpx.Client, url_base: str, transaction_id: int) -> None:
-    """Confirma (commit) una transacción de ejercicios en Polar."""
-    resp = cliente.put(
-        f"{url_base}/exercise-transactions/{transaction_id}",
-        headers=_cabeceras(),
-    )
-    if resp.status_code == 200:
-        logger.info(f"Polar: transacción {transaction_id} confirmada")
-    else:
-        logger.warning(f"Polar: error confirmando transacción {transaction_id} ({resp.status_code})")
-
-
 def _parsear_ejercicio(datos: dict) -> dict | None:
     """
     Convierte el JSON de un ejercicio Polar al formato de nuestra BD.
+    Compatible con el endpoint GET /v3/exercises (campos sin guión).
     Devuelve None si faltan campos obligatorios.
     """
     polar_id = str(datos.get("id", ""))
     if not polar_id:
         return None
 
-    fecha_inicio = datos.get("start-time", "")
+    # El endpoint /v3/exercises usa start_time (guión bajo)
+    fecha_inicio = datos.get("start_time") or datos.get("start-time", "")
     if not fecha_inicio:
         return None
 
@@ -157,8 +111,8 @@ def _parsear_ejercicio(datos: dict) -> dict | None:
         return None
 
     tipo = datos.get("sport", "UNKNOWN").upper()
-    # Usar detailed-sport-info si está disponible y es más específico
-    detalle = datos.get("detailed-sport-info", "")
+    # detailed_sport_info es más específico (CYCLING, STRETCHING, RUNNING...)
+    detalle = datos.get("detailed_sport_info") or datos.get("detailed-sport-info", "")
     if detalle:
         tipo = detalle.upper()
 
@@ -167,11 +121,12 @@ def _parsear_ejercicio(datos: dict) -> dict | None:
 
     calorias = datos.get("calories")
 
-    fc_datos = datos.get("heart-rate", {})
+    # El endpoint /v3/exercises usa heart_rate (guión bajo)
+    fc_datos = datos.get("heart_rate") or datos.get("heart-rate") or {}
     fc_promedio = fc_datos.get("average") if fc_datos else None
     fc_maxima = fc_datos.get("maximum") if fc_datos else None
 
-    fecha_subida = datos.get("upload-time")
+    fecha_subida = datos.get("upload_time") or datos.get("upload-time")
 
     return {
         "polar_id": polar_id,
