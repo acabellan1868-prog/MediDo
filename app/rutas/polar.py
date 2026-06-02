@@ -243,6 +243,38 @@ def cargar_ruta(polar_id: str):
     return datos_ruta
 
 
+@ruta.put("/ejercicio/{polar_id}/ruta")
+def guardar_ruta_manual(polar_id: str, datos: dict):
+    """
+    Guarda datos de ruta introducidos manualmente por el usuario.
+    Acepta: velocidad_maxima_kmh, desnivel_positivo, desnivel_negativo.
+    """
+    ejercicio = bd.consultar_uno(
+        "SELECT polar_id FROM actividades_polar WHERE polar_id = ?", (polar_id,)
+    )
+    if not ejercicio:
+        raise HTTPException(404, f"Ejercicio no encontrado: {polar_id}")
+
+    campos = {}
+    if "velocidad_maxima_kmh" in datos and datos["velocidad_maxima_kmh"] is not None:
+        campos["velocidad_maxima_kmh"] = float(datos["velocidad_maxima_kmh"])
+    if "desnivel_positivo" in datos and datos["desnivel_positivo"] is not None:
+        campos["desnivel_positivo"] = int(datos["desnivel_positivo"])
+    if "desnivel_negativo" in datos and datos["desnivel_negativo"] is not None:
+        campos["desnivel_negativo"] = int(datos["desnivel_negativo"])
+
+    if not campos:
+        raise HTTPException(400, "No se proporcionó ningún campo válido")
+
+    sets = ", ".join(f"{k} = ?" for k in campos)
+    bd.ejecutar(
+        f"UPDATE actividades_polar SET {sets} WHERE polar_id = ?",
+        (*campos.values(), polar_id),
+    )
+    logger.info(f"Ruta actualizada manualmente para {polar_id}: {campos}")
+    return {"ok": True, "polar_id": polar_id, **campos}
+
+
 def _guardar_ejercicios(ejercicios: list[dict]) -> int:
     """
     Inserta los ejercicios nuevos en la BD, ignorando duplicados (UNIQUE polar_id).

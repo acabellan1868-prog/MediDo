@@ -531,6 +531,43 @@
             </div>
         </div>
 
+        <!-- ══ MODAL EDICIÓN RUTA POLAR ══ -->
+        <div id="polarModalOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:300" onclick="cerrarModalRuta()"></div>
+        <div id="polarModal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+             background:var(--ck-bg2);border:1px solid var(--ck-line);padding:1.5rem;z-index:301;min-width:280px">
+            <div style="font-size:0.72rem;font-weight:700;letter-spacing:0.1em;color:var(--ck-accent);margin-bottom:1rem">
+                DATOS DE RUTA
+            </div>
+            <input type="hidden" id="modalPolarId">
+            <div style="display:flex;flex-direction:column;gap:0.75rem;margin-bottom:1.25rem">
+                <label style="font-size:0.62rem;color:var(--ck-on-variant);letter-spacing:0.08em">
+                    VELOCIDAD MÁXIMA (km/h)
+                    <input type="number" id="modalVmax" step="0.1" min="0"
+                        style="display:block;width:100%;margin-top:0.25rem;background:var(--ck-bg);
+                               border:1px solid var(--ck-line);color:var(--ck-on-surface);
+                               padding:0.4rem 0.5rem;font-family:var(--ck-fuente);font-size:0.72rem">
+                </label>
+                <label style="font-size:0.62rem;color:var(--ck-on-variant);letter-spacing:0.08em">
+                    DESNIVEL POSITIVO D+ (metros)
+                    <input type="number" id="modalDp" step="1" min="0"
+                        style="display:block;width:100%;margin-top:0.25rem;background:var(--ck-bg);
+                               border:1px solid var(--ck-line);color:var(--ck-on-surface);
+                               padding:0.4rem 0.5rem;font-family:var(--ck-fuente);font-size:0.72rem">
+                </label>
+                <label style="font-size:0.62rem;color:var(--ck-on-variant);letter-spacing:0.08em">
+                    DESNIVEL NEGATIVO D- (metros)
+                    <input type="number" id="modalDn" step="1" min="0"
+                        style="display:block;width:100%;margin-top:0.25rem;background:var(--ck-bg);
+                               border:1px solid var(--ck-line);color:var(--ck-on-surface);
+                               padding:0.4rem 0.5rem;font-family:var(--ck-fuente);font-size:0.72rem">
+                </label>
+            </div>
+            <div style="display:flex;gap:0.5rem;justify-content:flex-end">
+                <button class="md-btn" onclick="cerrarModalRuta()" style="background:none;border-color:var(--ck-line)">CANCELAR</button>
+                <button class="md-btn" onclick="guardarRutaManual()">GUARDAR</button>
+            </div>
+        </div>
+
         <!-- ══ PANEL POLAR ══ -->
         <div class="md-panel" id="panelPolar">
             <div class="md-seccion">
@@ -1148,11 +1185,20 @@
     }
 
     function _botonRuta(a) {
-        if (!a.tiene_ruta) return '';
-        // Si ya tiene datos cargados, no mostrar botón
-        if (a.desnivel_positivo != null) return '<span style="color:var(--ck-ok);font-size:0.7rem">✓</span>';
-        return '<button class="md-btn" style="padding:0.2rem 0.5rem;font-size:0.6rem" ' +
-               'onclick="cargarRuta(\'' + a.id + '\')" id="btn-ruta-' + a.id + '">GPS</button>';
+        var btnEdit = '<button class="md-btn" style="padding:0.2rem 0.4rem;font-size:0.6rem;margin-left:0.25rem" ' +
+                      'onclick="abrirModalRuta(\'' + a.id + '\',' +
+                      (a.velocidad_maxima_kmh || 'null') + ',' +
+                      (a.desnivel_positivo    || 'null') + ',' +
+                      (a.desnivel_negativo    || 'null') + ')" ' +
+                      'title="Editar datos de ruta manualmente">' +
+                      '<span class="material-symbols-outlined" style="font-size:0.75rem;vertical-align:middle">edit</span>' +
+                      '</button>';
+        if (!a.tiene_ruta) return btnEdit;
+        var btnGps = (a.desnivel_positivo != null)
+            ? '<span style="color:var(--ck-ok);font-size:0.7rem">✓</span>'
+            : '<button class="md-btn" style="padding:0.2rem 0.5rem;font-size:0.6rem" ' +
+              'onclick="cargarRuta(\'' + a.id + '\')" id="btn-ruta-' + a.id + '">GPS</button>';
+        return btnGps + btnEdit;
     }
 
     function cargarRuta(polarId) {
@@ -1176,6 +1222,57 @@
                 if (btn) { btn.textContent = 'GPS'; btn.disabled = false; }
             });
     }
+
+    function abrirModalRuta(polarId, vmax, dp, dn) {
+        document.getElementById('modalPolarId').value = polarId;
+        document.getElementById('modalVmax').value = vmax || '';
+        document.getElementById('modalDp').value   = dp   || '';
+        document.getElementById('modalDn').value   = dn   || '';
+        document.getElementById('polarModal').style.display        = 'block';
+        document.getElementById('polarModalOverlay').style.display = 'block';
+        document.getElementById('modalVmax').focus();
+    }
+
+    function cerrarModalRuta() {
+        document.getElementById('polarModal').style.display        = 'none';
+        document.getElementById('polarModalOverlay').style.display = 'none';
+    }
+
+    function guardarRutaManual() {
+        var polarId = document.getElementById('modalPolarId').value;
+        var vmax = document.getElementById('modalVmax').value;
+        var dp   = document.getElementById('modalDp').value;
+        var dn   = document.getElementById('modalDn').value;
+
+        var payload = {};
+        if (vmax !== '') payload.velocidad_maxima_kmh = parseFloat(vmax);
+        if (dp   !== '') payload.desnivel_positivo    = parseInt(dp);
+        if (dn   !== '') payload.desnivel_negativo    = parseInt(dn);
+
+        if (Object.keys(payload).length === 0) { cerrarModalRuta(); return; }
+
+        fetch(API + '/polar/ejercicio/' + polarId + '/ruta', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        })
+        .then(function(r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+        .then(function(d) {
+            var vmaxEl = document.getElementById('polar-vmax-' + polarId);
+            var dpEl   = document.getElementById('polar-dp-'   + polarId);
+            var dnEl   = document.getElementById('polar-dn-'   + polarId);
+            if (vmaxEl && d.velocidad_maxima_kmh != null) vmaxEl.textContent = d.velocidad_maxima_kmh.toFixed(1) + ' km/h';
+            if (dpEl   && d.desnivel_positivo    != null) dpEl.textContent   = '+' + d.desnivel_positivo + ' m';
+            if (dnEl   && d.desnivel_negativo    != null) dnEl.textContent   = '-' + d.desnivel_negativo + ' m';
+            cerrarModalRuta();
+        })
+        .catch(function() { alert('Error al guardar. Inténtalo de nuevo.'); });
+    }
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') cerrarModalRuta();
+        if (e.key === 'Enter' && document.getElementById('polarModal').style.display === 'block') guardarRutaManual();
+    });
 
     function sincronizarPolar() {
         var btn = document.getElementById('btnSincronizarPolar');
