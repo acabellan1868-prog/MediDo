@@ -578,6 +578,7 @@
                                 <th>V. máx</th>
                                 <th>D+</th>
                                 <th>D-</th>
+                                <th></th>
                             </tr>
                         </thead>
                         <tbody id="polarTabla">
@@ -1119,7 +1120,7 @@
 
         var tbody = document.getElementById('polarTabla');
         if (!d.ultimas_actividades || d.ultimas_actividades.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="11" class="sin-datos">Sin actividades en este período. Sincroniza el reloj con la app de Polar.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="12" class="sin-datos">Sin actividades en este período. Sincroniza el reloj con la app de Polar.</td></tr>';
             return;
         }
         tbody.innerHTML = d.ultimas_actividades.map(function(a) {
@@ -1133,16 +1134,47 @@
                 '<td>' + (a.fc_promedio ? a.fc_promedio + ' bpm' : '—') + '</td>' +
                 '<td>' + (a.fc_maxima  ? a.fc_maxima  + ' bpm' : '—') + '</td>' +
                 '<td>' + (a.velocidad_media_kmh  ? a.velocidad_media_kmh.toFixed(1)  + ' km/h' : '—') + '</td>' +
-                '<td>' + (a.velocidad_maxima_kmh ? a.velocidad_maxima_kmh.toFixed(1) + ' km/h' : '—') + '</td>' +
-                '<td>' + (a.desnivel_positivo != null ? '+' + a.desnivel_positivo + ' m' : '—') + '</td>' +
-                '<td>' + (a.desnivel_negativo != null ? '-' + a.desnivel_negativo + ' m' : '—') + '</td>' +
+                '<td id="polar-vmax-' + a.id + '">' + (a.velocidad_maxima_kmh ? a.velocidad_maxima_kmh.toFixed(1) + ' km/h' : '—') + '</td>' +
+                '<td id="polar-dp-' + a.id + '">' + (a.desnivel_positivo != null ? '+' + a.desnivel_positivo + ' m' : '—') + '</td>' +
+                '<td id="polar-dn-' + a.id + '">' + (a.desnivel_negativo != null ? '-' + a.desnivel_negativo + ' m' : '—') + '</td>' +
+                '<td>' + _botonRuta(a) + '</td>' +
                 '</tr>';
         }).join('');
     }
 
     function renderPolarError() {
         document.getElementById('polarTabla').innerHTML =
-            '<tr><td colspan="11" class="sin-datos">Error al cargar datos de Polar.</td></tr>';
+            '<tr><td colspan="12" class="sin-datos">Error al cargar datos de Polar.</td></tr>';
+    }
+
+    function _botonRuta(a) {
+        if (!a.tiene_ruta) return '';
+        // Si ya tiene datos cargados, no mostrar botón
+        if (a.desnivel_positivo != null) return '<span style="color:var(--ck-ok);font-size:0.7rem">✓</span>';
+        return '<button class="md-btn" style="padding:0.2rem 0.5rem;font-size:0.6rem" ' +
+               'onclick="cargarRuta(\'' + a.id + '\')" id="btn-ruta-' + a.id + '">GPS</button>';
+    }
+
+    function cargarRuta(polarId) {
+        var btn = document.getElementById('btn-ruta-' + polarId);
+        if (btn) { btn.disabled = true; btn.textContent = '...'; }
+        fetch(API + '/polar/ejercicio/' + polarId + '/ruta')
+            .then(function(r) {
+                if (!r.ok) throw new Error(r.status);
+                return r.json();
+            })
+            .then(function(d) {
+                var vmax = document.getElementById('polar-vmax-' + polarId);
+                var dp   = document.getElementById('polar-dp-'   + polarId);
+                var dn   = document.getElementById('polar-dn-'   + polarId);
+                if (vmax) vmax.textContent = d.velocidad_maxima_kmh ? d.velocidad_maxima_kmh.toFixed(1) + ' km/h' : '—';
+                if (dp)   dp.textContent   = d.desnivel_positivo != null ? '+' + d.desnivel_positivo + ' m' : '—';
+                if (dn)   dn.textContent   = d.desnivel_negativo != null ? '-' + d.desnivel_negativo + ' m' : '—';
+                if (btn)  { btn.textContent = '✓'; btn.disabled = true; btn.style.color = 'var(--ck-ok)'; }
+            })
+            .catch(function() {
+                if (btn) { btn.textContent = 'GPS'; btn.disabled = false; }
+            });
     }
 
     function sincronizarPolar() {

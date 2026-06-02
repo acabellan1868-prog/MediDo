@@ -83,6 +83,7 @@ def migrar_bd():
             "velocidad_maxima_kmh": "REAL",
             "desnivel_positivo":    "INTEGER",
             "desnivel_negativo":    "INTEGER",
+            "tiene_ruta":           "INTEGER NOT NULL DEFAULT 0",
         }
         for col, tipo in nuevas_polar.items():
             if col not in columnas_polar:

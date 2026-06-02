@@ -9,7 +9,8 @@ from datetime import datetime, timedelta
 from fastapi import APIRouter, HTTPException
 
 from app import bd
-from app.polar_client import sincronizar_ejercicios
+from app.polar_client import sincronizar_ejercicios, _obtener_datos_ruta
+import httpx
 
 logger = logging.getLogger("medido.polar")
 ruta = APIRouter()
@@ -64,7 +65,7 @@ def resumen_polar(dias: int = 7):
         SELECT polar_id, fecha_inicio, tipo, distancia_km,
                duracion_segundos, calorias, fc_promedio, fc_maxima,
                velocidad_media_kmh, velocidad_maxima_kmh,
-               desnivel_positivo, desnivel_negativo
+               desnivel_positivo, desnivel_negativo, tiene_ruta
         FROM actividades_polar
         WHERE date(fecha_inicio) >= ?
         ORDER BY fecha_inicio DESC
@@ -112,6 +113,7 @@ def resumen_polar(dias: int = 7):
                 "velocidad_maxima_kmh": a["velocidad_maxima_kmh"],
                 "desnivel_positivo": a["desnivel_positivo"],
                 "desnivel_negativo": a["desnivel_negativo"],
+                "tiene_ruta": bool(a["tiene_ruta"]),
             }
             for a in ultimas
         ],
@@ -140,7 +142,7 @@ def historial_polar(limite: int = 30):
         SELECT polar_id, fecha_inicio, tipo, distancia_km,
                duracion_segundos, calorias, fc_promedio, fc_maxima,
                velocidad_media_kmh, velocidad_maxima_kmh,
-               desnivel_positivo, desnivel_negativo
+               desnivel_positivo, desnivel_negativo, tiene_ruta
         FROM actividades_polar
         ORDER BY fecha_inicio DESC
         LIMIT ?
@@ -165,6 +167,7 @@ def historial_polar(limite: int = 30):
                 "velocidad_maxima_kmh": a["velocidad_maxima_kmh"],
                 "desnivel_positivo": a["desnivel_positivo"],
                 "desnivel_negativo": a["desnivel_negativo"],
+                "tiene_ruta": bool(a["tiene_ruta"]),
             }
             for a in actividades
         ],
@@ -191,6 +194,55 @@ def sincronizar_manual():
         raise HTTPException(500, "Error al sincronizar con Polar")
 
 
+@ruta.get("/ejercicio/{polar_id}/ruta")
+def cargar_ruta(polar_id: str):
+    """
+    Descarga el TCX de un ejercicio concreto y extrae velocidad máxima y desnivel.
+    Solo se llama bajo demanda desde el frontend (botón por fila).
+    Guarda los resultados en la BD para no volver a descargar.
+    """
+    ejercicio = bd.consultar_uno(
+        "SELECT polar_id, tiene_ruta, velocidad_maxima_kmh, desnivel_positivo FROM actividades_polar WHERE polar_id = ?",
+        (polar_id,),
+    )
+    if not ejercicio:
+        raise HTTPException(404, f"Ejercicio no encontrado: {polar_id}")
+    if not ejercicio["tiene_ruta"]:
+        raise HTTPException(400, "Este ejercicio no tiene datos de ruta (sin GPS)")
+
+    # Si ya están calculados, devolver directamente sin volver a descargar
+    if ejercicio["desnivel_positivo"] is not None:
+        return bd.consultar_uno(
+            "SELECT velocidad_maxima_kmh, desnivel_positivo, desnivel_negativo FROM actividades_polar WHERE polar_id = ?",
+            (polar_id,),
+        )
+
+    # Descargar TCX y calcular
+    try:
+        with httpx.Client(timeout=60) as cliente:
+            datos_ruta = _obtener_datos_ruta(cliente, polar_id)
+    except Exception as e:
+        logger.error(f"Error descargando ruta de {polar_id}: {e}")
+        raise HTTPException(500, "Error al descargar datos de ruta desde Polar")
+
+    # Guardar en BD
+    bd.ejecutar(
+        """
+        UPDATE actividades_polar
+        SET velocidad_maxima_kmh = ?, desnivel_positivo = ?, desnivel_negativo = ?
+        WHERE polar_id = ?
+        """,
+        (
+            datos_ruta["velocidad_maxima_kmh"],
+            datos_ruta["desnivel_positivo"],
+            datos_ruta["desnivel_negativo"],
+            polar_id,
+        ),
+    )
+    logger.info(f"Ruta cargada para {polar_id}: {datos_ruta}")
+    return datos_ruta
+
+
 def _guardar_ejercicios(ejercicios: list[dict]) -> int:
     """
     Inserta los ejercicios nuevos en la BD, ignorando duplicados (UNIQUE polar_id).
@@ -209,9 +261,8 @@ def _guardar_ejercicios(ejercicios: list[dict]) -> int:
             INSERT INTO actividades_polar
                 (polar_id, fecha_inicio, fecha_subida, tipo, distancia_km,
                  duracion_segundos, calorias, fc_promedio, fc_maxima,
-                 velocidad_media_kmh, velocidad_maxima_kmh,
-                 desnivel_positivo, desnivel_negativo)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 velocidad_media_kmh, tiene_ruta)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 ej["polar_id"],
@@ -224,9 +275,7 @@ def _guardar_ejercicios(ejercicios: list[dict]) -> int:
                 ej.get("fc_promedio"),
                 ej.get("fc_maxima"),
                 ej.get("velocidad_media_kmh"),
-                ej.get("velocidad_maxima_kmh"),
-                ej.get("desnivel_positivo"),
-                ej.get("desnivel_negativo"),
+                1 if ej.get("tiene_ruta") else 0,
             ),
         )
         nuevos += 1

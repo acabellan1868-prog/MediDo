@@ -138,21 +138,19 @@ def sincronizar_ejercicios() -> list[dict]:
                 ejercicio = _parsear_ejercicio(datos)
                 if not ejercicio:
                     continue
-                # Velocidad media calculada de distancia/duración
+                # Velocidad media: calculada gratis de distancia/duración
                 if ejercicio.get("distancia_km") and ejercicio["duracion_segundos"] > 0:
                     ejercicio["velocidad_media_kmh"] = round(
                         ejercicio["distancia_km"] / (ejercicio["duracion_segundos"] / 3600), 1
                     )
                 else:
                     ejercicio["velocidad_media_kmh"] = None
-                # Datos de ruta (velocidad máxima y desnivel) si el ejercicio tiene GPS
-                if datos.get("has_route"):
-                    datos_ruta = _obtener_datos_ruta(cliente, ejercicio["polar_id"])
-                    ejercicio.update(datos_ruta)
-                else:
-                    ejercicio["velocidad_maxima_kmh"] = None
-                    ejercicio["desnivel_positivo"] = None
-                    ejercicio["desnivel_negativo"] = None
+                # tiene_ruta indica si hay GPS disponible (para mostrar el botón en el frontend)
+                ejercicio["tiene_ruta"] = bool(datos.get("has_route"))
+                # Velocidad máxima y desnivel NO se descargan aquí — son bajo demanda via TCX
+                ejercicio["velocidad_maxima_kmh"] = None
+                ejercicio["desnivel_positivo"] = None
+                ejercicio["desnivel_negativo"] = None
                 ejercicios.append(ejercicio)
 
             logger.info(f"Polar: {len(ejercicios)} ejercicio(s) disponibles en la API")

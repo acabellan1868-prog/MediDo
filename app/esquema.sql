@@ -92,9 +92,10 @@ CREATE TABLE IF NOT EXISTS actividades_polar (
     fc_promedio INTEGER,                  -- Frecuencia cardíaca promedio (bpm)
     fc_maxima INTEGER,                    -- Frecuencia cardíaca máxima (bpm)
     velocidad_media_kmh REAL,             -- Velocidad media (km/h), calculada de distancia/duración
-    velocidad_maxima_kmh REAL,            -- Velocidad máxima (km/h), extraída del TCX
-    desnivel_positivo INTEGER,            -- Desnivel acumulado positivo (metros)
-    desnivel_negativo INTEGER,            -- Desnivel acumulado negativo (metros)
+    velocidad_maxima_kmh REAL,            -- Velocidad máxima (km/h), extraída del TCX bajo demanda
+    desnivel_positivo INTEGER,            -- Desnivel acumulado positivo (metros), extraído del TCX bajo demanda
+    desnivel_negativo INTEGER,            -- Desnivel acumulado negativo (metros), extraído del TCX bajo demanda
+    tiene_ruta INTEGER NOT NULL DEFAULT 0, -- 1 si el ejercicio tiene datos GPS disponibles
     fecha_registro TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
