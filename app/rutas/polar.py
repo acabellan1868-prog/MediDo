@@ -256,6 +256,8 @@ def guardar_ruta_manual(polar_id: str, datos: dict):
         raise HTTPException(404, f"Ejercicio no encontrado: {polar_id}")
 
     campos = {}
+    if "velocidad_media_kmh"  in datos and datos["velocidad_media_kmh"]  is not None:
+        campos["velocidad_media_kmh"]  = float(datos["velocidad_media_kmh"])
     if "velocidad_maxima_kmh" in datos and datos["velocidad_maxima_kmh"] is not None:
         campos["velocidad_maxima_kmh"] = float(datos["velocidad_maxima_kmh"])
     if "desnivel_positivo" in datos and datos["desnivel_positivo"] is not None:
