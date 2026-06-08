@@ -1161,6 +1161,41 @@
 
     /* ══ POLAR ══ */
 
+    function obtenerIconoActividad(tipo) {
+        var iconos = {
+            'CYCLING': '🚴',
+            'RUNNING': '🏃',
+            'JOGGING': '🏃',
+            'WALKING': '🚶',
+            'SWIMMING': '🏊',
+            'STRETCHING': '🧘',
+            'YOGA': '🧘',
+            'GOLF': '⛳',
+            'TENNIS': '🎾',
+            'SKIING': '⛷️',
+            'HIKING': '🥾',
+            'FOOTBALL': '⚽',
+            'SOCCER': '⚽',
+            'BASKETBALL': '🏀',
+            'CLIMBING': '🧗',
+            'ROWING': '🚣',
+            'SKATING': '🛹',
+            'CROSSFIT': '🏋️',
+            'STRENGTH_TRAINING': '🏋️',
+            'AEROBIC': '🏃',
+            'ELLIPTICAL': '🏃',
+            'STATIONARY_CYCLING': '🚴',
+            'TREADMILL': '🏃',
+            'PILATES': '🧘',
+            'MARTIAL_ARTS': '🥋',
+            'BOXING': '🥊',
+            'HANDCYCLING': '🚴',
+            'MOUNTAIN_BIKING': '🚴',
+            'ROAD_BIKING': '🚴',
+        };
+        return (iconos[tipo] || '•') + ' ' + (tipo || '?');
+    }
+
     function cargarPolar() {
         var dias = document.getElementById('polarPeriodo').value;
         fetch(API + '/polar/resumen?dias=' + dias)
@@ -1185,7 +1220,7 @@
             var fecha = new Date(a.fecha).toLocaleDateString('es-ES', {day:'2-digit', month:'short', year:'numeric'});
             return '<tr>' +
                 '<td>' + fecha + '</td>' +
-                '<td>' + (a.tipo || '—') + '</td>' +
+                '<td>' + obtenerIconoActividad(a.tipo) + '</td>' +
                 '<td>' + (a.distancia_km ? a.distancia_km.toFixed(2) + ' km' : '—') + '</td>' +
                 '<td>' + (a.duracion_texto || '—') + '</td>' +
                 '<td>' + (a.calorias ? a.calorias + ' kcal' : '—') + '</td>' +
